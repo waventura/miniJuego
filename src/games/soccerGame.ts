@@ -9,11 +9,16 @@ import {
   VictoryData,
 } from '../types';
 import { drawCharacter } from '../art/characters';
-import { drawBall, drawCloud, drawStar, drawSun, fillRoundRect } from '../art/props';
+import {
+  drawCloud,
+  drawSoccerBall,
+  drawStar,
+  drawSun,
+  fillRoundRect,
+} from '../art/props';
 import { drawTactileButton, isRectHeld, isRectJustPressed } from '../ui/buttons';
 import { sound } from '../audio/sound';
 
-const GOALS_TO_WIN = 5;
 const GOAL_LEFT = 330;
 const GOAL_RIGHT = GAME_WIDTH - 330;
 const GOAL_TOP = 160;
@@ -31,9 +36,15 @@ interface GoalSpark {
 export class SoccerGame implements MiniGame {
   private time = 0;
   private goals = 0;
+  private goalsToWin: number;
   private keeperId: CharacterId;
   private keeperX = GAME_WIDTH / 2;
   private keeperDir = 1;
+
+  // Visible aiming reticle oscillating across the goal!
+  private aimX = GAME_WIDTH / 2;
+  private aimY = 275;
+  private aimDir = 1;
 
   // Ball state
   private ballX = GAME_WIDTH / 2;
@@ -42,7 +53,7 @@ export class SoccerGame implements MiniGame {
   private ballRot = 0;
   private kicking = false;
   private targetX = GAME_WIDTH / 2;
-  private targetY = 290;
+  private targetY = 275;
   private kickProgress = 0;
 
   private bannerText = '';
@@ -51,8 +62,6 @@ export class SoccerGame implements MiniGame {
   private finished = false;
   private finishTimer = 0;
   private kickHeld = false;
-
-  private goalsToWin: number;
 
   private kickBtn: Rect = {
     x: GAME_WIDTH - 340,
@@ -89,8 +98,8 @@ export class SoccerGame implements MiniGame {
       return null;
     }
 
-    // Friendly goalkeeper patrolling slowly back and forth
-    const keeperSpeed = 180 + this.goals * 18;
+    // Friendly goalkeeper patrolling back and forth
+    const keeperSpeed = 165 + this.level * 20;
     this.keeperX += this.keeperDir * keeperSpeed * dt;
     if (this.keeperX > GOAL_RIGHT - 90) {
       this.keeperX = GOAL_RIGHT - 90;
@@ -100,7 +109,21 @@ export class SoccerGame implements MiniGame {
       this.keeperDir = 1;
     }
 
-    // Input: tap anywhere in the goal area to aim & kick, OR press giant ¡PATEAR! button
+    // Sweep visible aiming target smoothly across the goal when ready to shoot
+    if (!this.kicking) {
+      const aimSpeed = 310 + (this.level - 1) * 35;
+      this.aimX += this.aimDir * aimSpeed * dt;
+      if (this.aimX > GOAL_RIGHT - 64) {
+        this.aimX = GOAL_RIGHT - 64;
+        this.aimDir = -1;
+      } else if (this.aimX < GOAL_LEFT + 64) {
+        this.aimX = GOAL_LEFT + 64;
+        this.aimDir = 1;
+      }
+      this.aimY = 268 + Math.sin(this.time * 2.5) * 32;
+    }
+
+    // Input: tap anywhere in the goal to aim & kick there, OR press ¡PATEAR! to kick at the aiming reticle!
     this.kickHeld = isRectHeld(input, this.kickBtn);
     const kickBtnPressed =
       isRectJustPressed(input, this.kickBtn) ||
@@ -123,28 +146,27 @@ export class SoccerGame implements MiniGame {
           GOAL_TOP + 48,
           Math.min(GOAL_BOTTOM - 35, tapGoal.y)
         );
+        this.aimX = this.targetX;
+        this.aimY = this.targetY;
       } else {
-        // Smart kid-friendly aim toward the open side of the goal!
-        this.targetX =
-          this.keeperX > GAME_WIDTH / 2 ? GOAL_LEFT + 135 : GOAL_RIGHT - 135;
-        this.targetY = 285;
+        this.targetX = this.aimX;
+        this.targetY = this.aimY;
       }
       sound.playJump();
     }
 
     if (this.kicking) {
-      this.kickProgress += dt * 2.2;
+      this.kickProgress += dt * 2.3;
       const t = Math.min(1, this.kickProgress);
       const startX = GAME_WIDTH / 2;
       const startY = 635;
       const arc = Math.sin(t * Math.PI) * 90;
       this.ballX = startX + (this.targetX - startX) * t;
       this.ballY = startY + (this.targetY - startY) * t - arc;
-      this.ballScale = 1 - t * 0.35;
-      this.ballRot += dt * 14;
+      this.ballScale = 1 - t * 0.34;
+      this.ballRot += dt * 15;
 
       if (t >= 1) {
-        // Check if goalkeeper blocked it (small forgiving hitbox so scoring feels great!)
         const saved = Math.abs(this.targetX - this.keeperX) < 58;
         if (saved) {
           this.bannerText = '¡CASI! ¡INTENTA OTRA VEZ!';
@@ -153,7 +175,7 @@ export class SoccerGame implements MiniGame {
         } else {
           this.goals++;
           this.bannerText = '¡GOOOOOL!';
-          this.bannerTimer = 1.1;
+          this.bannerTimer = 1.05;
           sound.playBonus();
           this.spawnGoalSparks(this.targetX, this.targetY);
           if (this.goals >= this.goalsToWin) {
@@ -162,7 +184,6 @@ export class SoccerGame implements MiniGame {
             sound.playFlagPlant();
           }
         }
-        // Reset ball
         this.kicking = false;
         this.ballX = GAME_WIDTH / 2;
         this.ballY = 635;
@@ -272,6 +293,11 @@ export class SoccerGame implements MiniGame {
       time: this.time,
     });
 
+    // Clear aiming trajectory line + bright pulsing target reticle!
+    if (!this.finished) {
+      this.drawAimGuide(ctx);
+    }
+
     // Player ready beside the ball
     drawCharacter(ctx, {
       id: this.playerId,
@@ -283,8 +309,8 @@ export class SoccerGame implements MiniGame {
       time: this.time,
     });
 
-    // Soccer ball
-    drawBall(ctx, this.ballX, this.ballY, 34 * this.ballScale, this.ballRot);
+    // Classic Black & White Soccer Ball!
+    drawSoccerBall(ctx, this.ballX, this.ballY, 34 * this.ballScale, this.ballRot);
 
     // Hint text
     if (!this.kicking && this.bannerTimer <= 0 && !this.finished) {
@@ -293,8 +319,8 @@ export class SoccerGame implements MiniGame {
       ctx.lineWidth = 5;
       ctx.font = '900 28px "Fredoka", sans-serif';
       ctx.textAlign = 'center';
-      ctx.strokeText('¡Toca la portería para meter GOL!', GAME_WIDTH / 2, 130);
-      ctx.fillText('¡Toca la portería para meter GOL!', GAME_WIDTH / 2, 130);
+      ctx.strokeText('¡Apunta con la mira y toca PATEAR!', GAME_WIDTH / 2, 130);
+      ctx.fillText('¡Apunta con la mira y toca PATEAR!', GAME_WIDTH / 2, 130);
     }
 
     // Sparks
@@ -361,5 +387,67 @@ export class SoccerGame implements MiniGame {
       pressed: this.kickHeld,
       radius: 28,
     });
+  }
+
+  private drawAimGuide(ctx: CanvasRenderingContext2D): void {
+    const tx = this.kicking ? this.targetX : this.aimX;
+    const ty = this.kicking ? this.targetY : this.aimY;
+    const pulse = 1 + Math.sin(this.time * 8) * 0.1;
+
+    ctx.save();
+    // Glowing dashed aim line from ball to target
+    if (!this.kicking) {
+      ctx.strokeStyle = '#FEF08A';
+      ctx.lineWidth = 7;
+      ctx.setLineDash([16, 14]);
+      ctx.lineDashOffset = -this.time * 60;
+      ctx.beginPath();
+      ctx.moveTo(GAME_WIDTH / 2, 600);
+      ctx.lineTo(tx, ty);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    // Target bullseye reticle
+    ctx.translate(tx, ty);
+    ctx.scale(pulse, pulse);
+
+    ctx.fillStyle = 'rgba(250, 204, 21, 0.25)';
+    ctx.beginPath();
+    ctx.arc(0, 0, 34, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.strokeStyle = '#EF4444';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.arc(0, 0, 30, 0, Math.PI * 2);
+    ctx.stroke();
+
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(0, 0, 17, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Crosshair ticks
+    ctx.strokeStyle = '#EF4444';
+    ctx.lineWidth = 5;
+    ctx.beginPath();
+    ctx.moveTo(-40, 0);
+    ctx.lineTo(-22, 0);
+    ctx.moveTo(22, 0);
+    ctx.lineTo(40, 0);
+    ctx.moveTo(0, -40);
+    ctx.lineTo(0, -22);
+    ctx.moveTo(0, 22);
+    ctx.lineTo(0, 40);
+    ctx.stroke();
+
+    ctx.fillStyle = '#FACC15';
+    ctx.beginPath();
+    ctx.arc(0, 0, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
   }
 }

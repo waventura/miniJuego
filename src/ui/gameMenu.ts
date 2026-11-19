@@ -18,6 +18,7 @@ import {
   drawFlag,
   drawGradCapItem,
   drawSlide,
+  drawSoccerBall,
   drawStar,
   drawSun,
   fillRoundRect,
@@ -327,7 +328,7 @@ export class GameMenuScreen {
       ctx.strokeRect(-54, -46, 108, 66);
       ctx.fillStyle = '#22C55E';
       ctx.fillRect(-62, 18, 124, 34);
-      drawBall(ctx, 0, 44, 24, this.time * 3);
+      drawSoccerBall(ctx, 0, 44, 24, this.time * 3);
     } else if (id === 'dinos') {
       ctx.fillStyle = '#FEF08A';
       ctx.strokeStyle = '#1E293B';

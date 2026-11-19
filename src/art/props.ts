@@ -222,6 +222,83 @@ export function drawBall(
   ctx.restore();
 }
 
+export function drawSoccerBall(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  radius = 30,
+  rot = 0
+): void {
+  ctx.save();
+  ctx.translate(x, y - radius);
+  ctx.rotate(rot);
+
+  // White ball body
+  ctx.fillStyle = '#FFFFFF';
+  ctx.strokeStyle = '#0F172A';
+  ctx.lineWidth = 3.2;
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Clip panels inside circle
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(0, 0, radius - 1, 0, Math.PI * 2);
+  ctx.clip();
+
+  // Center black pentagon
+  const pr = radius * 0.36;
+  ctx.fillStyle = '#1E293B';
+  ctx.beginPath();
+  for (let i = 0; i < 5; i++) {
+    const a = (i * Math.PI * 2) / 5 - Math.PI / 2;
+    const px = Math.cos(a) * pr;
+    const py = Math.sin(a) * pr;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fill();
+
+  // Seam lines + 5 outer pentagons around edge
+  ctx.strokeStyle = '#1E293B';
+  ctx.lineWidth = 2.4;
+  for (let i = 0; i < 5; i++) {
+    const a = (i * Math.PI * 2) / 5 - Math.PI / 2;
+    const ix = Math.cos(a) * pr;
+    const iy = Math.sin(a) * pr;
+    const ox = Math.cos(a) * radius * 0.88;
+    const oy = Math.sin(a) * radius * 0.88;
+    ctx.beginPath();
+    ctx.moveTo(ix, iy);
+    ctx.lineTo(ox, oy);
+    ctx.stroke();
+
+    // Outer black patch
+    ctx.fillStyle = '#1E293B';
+    ctx.beginPath();
+    ctx.arc(
+      Math.cos(a) * radius * 0.96,
+      Math.sin(a) * radius * 0.96,
+      radius * 0.28,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Crisp outer outline
+  ctx.strokeStyle = '#0F172A';
+  ctx.lineWidth = 3.2;
+  ctx.beginPath();
+  ctx.arc(0, 0, radius, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
 export function drawBackpack(
   ctx: CanvasRenderingContext2D,
   x: number,
