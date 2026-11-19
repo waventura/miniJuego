@@ -26,6 +26,7 @@ import { ClassroomGame } from './games/classroomGame';
 import { MountainGame } from './games/mountainGame';
 import { SoccerGame } from './games/soccerGame';
 import { DinoGame } from './games/dinoGame';
+import { CarRaceGame } from './games/carRaceGame';
 
 const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
@@ -104,6 +105,7 @@ window.addEventListener('keyup', (e) => {
 let screen: ScreenId = 'select';
 let selectedCharacter: CharacterId = 'carlos';
 let currentGameId: GameId = 'race';
+let currentLevel = 1;
 let activeGame: MiniGame | null = null;
 let victoryData: VictoryData | null = null;
 
@@ -114,28 +116,32 @@ const victoryScreen = new VictoryScreen();
 const backBtn: Rect = { x: 24, y: 20, w: 68, h: 64 };
 const muteBtn: Rect = { x: GAME_WIDTH - 92, y: 20, w: 68, h: 64 };
 
-function launchGame(gameId: GameId): void {
+function launchGame(gameId: GameId, level = 1): void {
   currentGameId = gameId;
+  currentLevel = level;
   switch (gameId) {
     case 'race':
-      activeGame = new RaceGame(selectedCharacter);
-      sound.playVoice('intro_carrera');
+      activeGame = new RaceGame(selectedCharacter, level);
+      if (level === 1) sound.playVoice('intro_carrera');
       break;
     case 'playground':
-      activeGame = new PlaygroundGame(selectedCharacter);
-      sound.playVoice('intro_patio');
+      activeGame = new PlaygroundGame(selectedCharacter, level);
+      if (level === 1) sound.playVoice('intro_patio');
       break;
     case 'classroom':
-      activeGame = new ClassroomGame(selectedCharacter);
+      activeGame = new ClassroomGame(selectedCharacter, level);
       break;
     case 'mountain':
-      activeGame = new MountainGame(selectedCharacter);
+      activeGame = new MountainGame(selectedCharacter, level);
       break;
     case 'soccer':
-      activeGame = new SoccerGame(selectedCharacter);
+      activeGame = new SoccerGame(selectedCharacter, level);
       break;
     case 'dinos':
-      activeGame = new DinoGame(selectedCharacter);
+      activeGame = new DinoGame(selectedCharacter, level);
+      break;
+    case 'cars':
+      activeGame = new CarRaceGame(selectedCharacter, level);
       break;
   }
   screen = 'playing';
@@ -233,7 +239,7 @@ function loop(now: number): void {
       screen = 'select';
       sound.playVoice('elige_personaje');
     } else if (res.launchGame) {
-      launchGame(res.launchGame);
+      launchGame(res.launchGame, 1);
     }
   } else if (screen === 'playing' && activeGame) {
     const win = activeGame.update(dt, input);
@@ -244,9 +250,11 @@ function loop(now: number): void {
       screen = 'victory';
     }
   } else if (screen === 'victory' && victoryData) {
-    const action = victoryScreen.update(dt, input);
-    if (action === 'replay') {
-      launchGame(currentGameId);
+    const action = victoryScreen.update(dt, input, victoryData);
+    if (action === 'nextLevel') {
+      launchGame(currentGameId, Math.min(3, currentLevel + 1));
+    } else if (action === 'replay') {
+      launchGame(currentGameId, currentLevel);
     } else if (action === 'menu') {
       screen = 'menu';
       sound.playVoice('elige_juego');

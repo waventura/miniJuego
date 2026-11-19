@@ -51,7 +51,10 @@ export class DinoGame implements MiniGame {
   private finished = false;
   private finishTimer = 0;
 
-  constructor(private playerId: CharacterId) {
+  private dinosToRescue: number;
+
+  constructor(private playerId: CharacterId, private level = 1) {
+    this.dinosToRescue = 6 + (level - 1) * 3;
     // Start with 4 wiggly eggs on screen
     for (let i = 0; i < 4; i++) {
       this.spawnEgg(220 + i * 290, 480 + (i % 2) * 110);
@@ -63,7 +66,7 @@ export class DinoGame implements MiniGame {
     this.eggs.push({
       x: x ?? 180 + Math.random() * (GAME_WIDTH - 360),
       y: y ?? 390 + Math.random() * 260,
-      vx: (Math.random() < 0.5 ? -1 : 1) * (45 + Math.random() * 55),
+      vx: (Math.random() < 0.5 ? -1 : 1) * (45 + this.level * 12 + Math.random() * 45),
       phase: Math.random() * Math.PI * 2,
       color: style.egg,
       spotColor: style.spot,
@@ -81,8 +84,10 @@ export class DinoGame implements MiniGame {
       if (this.finishTimer >= 1.25) {
         return {
           gameId: 'dinos',
-          gameTitle: 'Parque de Dinosaurios',
+          gameTitle: `Parque de Dinosaurios (Nivel ${this.level})`,
           characterId: this.playerId,
+          level: this.level,
+          maxLevel: 3,
           headline: '¡AMIGO DE LOS DINOS!',
           statLabel: `🦕 ¡Rescataste ${this.rescued} dinosaurios bebés!`,
           medalTitle: 'MEDALLA JURÁSICA',
@@ -112,7 +117,7 @@ export class DinoGame implements MiniGame {
           sound.playBonus();
           this.spawnSparks(egg.x, egg.y - 24, egg.dinoColor);
 
-          if (this.rescued >= DINOS_TO_RESCUE) {
+          if (this.rescued >= this.dinosToRescue) {
             this.finished = true;
             this.finishTimer = 0;
             sound.playFlagPlant();
@@ -133,7 +138,7 @@ export class DinoGame implements MiniGame {
         this.rescued++;
         sound.playBonus();
         this.spawnSparks(nextEgg.x, nextEgg.y - 24, nextEgg.dinoColor);
-        if (this.rescued >= DINOS_TO_RESCUE) {
+        if (this.rescued >= this.dinosToRescue) {
           this.finished = true;
           this.finishTimer = 0;
           sound.playFlagPlant();
@@ -274,7 +279,7 @@ export class DinoGame implements MiniGame {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(
-      `¡TOCA LOS HUEVOS!  ${this.rescued} / ${DINOS_TO_RESCUE}`,
+      `NIVEL ${this.level}  •  HUEVOS: ${this.rescued} / ${this.dinosToRescue}`,
       GAME_WIDTH / 2,
       54
     );

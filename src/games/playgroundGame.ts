@@ -63,6 +63,8 @@ export class PlaygroundGame implements MiniGame {
   private finishTimer = 0;
   private jumpHeld = false;
 
+  private totalDist: number;
+
   private jumpBtn: Rect = {
     x: GAME_WIDTH - 360,
     y: 626,
@@ -70,7 +72,8 @@ export class PlaygroundGame implements MiniGame {
     h: 138,
   };
 
-  constructor(private playerId: CharacterId) {
+  constructor(private playerId: CharacterId, private level = 1) {
+    this.totalDist = TOTAL_DIST + (level - 1) * 1400;
     // Generate kid-friendly course of obstacles + jump-arc collectibles
     const kinds: Array<'slide' | 'ball' | 'backpack'> = [
       'ball',
@@ -79,7 +82,7 @@ export class PlaygroundGame implements MiniGame {
     ];
     let x = 760;
     let idx = 0;
-    while (x < TOTAL_DIST - 500) {
+    while (x < this.totalDist - 500) {
       const kind = kinds[idx % kinds.length];
       this.obstacles.push({ x, kind, hit: false });
 
@@ -111,7 +114,7 @@ export class PlaygroundGame implements MiniGame {
         collected: false,
       });
 
-      x += 540 + (idx % 3) * 60;
+      x += 540 + (idx % 3) * 55;
       idx++;
     }
   }
@@ -124,8 +127,10 @@ export class PlaygroundGame implements MiniGame {
       if (this.finishTimer >= 1.1) {
         return {
           gameId: 'playground',
-          gameTitle: 'Patio de Recreo',
+          gameTitle: `Patio de Recreo (Nivel ${this.level})`,
           characterId: this.playerId,
+          level: this.level,
+          maxLevel: 3,
           headline: '¡SÚPER SALTARÍN!',
           statLabel: `★ ${this.stars} estrellas y ${this.caps} birretes`,
           medalTitle: 'MEDALLA DEL RECREO',
@@ -223,7 +228,7 @@ export class PlaygroundGame implements MiniGame {
     }
     this.pops = this.pops.filter((p) => p.life > 0);
 
-    if (this.dist >= TOTAL_DIST - 260) {
+    if (this.dist >= this.totalDist - 260) {
       this.finished = true;
       this.finishTimer = 0;
       sound.playFlagPlant();
@@ -272,7 +277,7 @@ export class PlaygroundGame implements MiniGame {
     ctx.fillRect(0, 600, GAME_WIDTH, GAME_HEIGHT - 600);
 
     // Finish line arch
-    const finishX = TOTAL_DIST - this.dist;
+    const finishX = this.totalDist - this.dist;
     if (finishX > -80 && finishX < GAME_WIDTH + 120) {
       ctx.fillStyle = '#EF4444';
       ctx.fillRect(finishX - 10, 340, 20, 250);
@@ -393,7 +398,7 @@ export class PlaygroundGame implements MiniGame {
     ctx.fill();
     ctx.stroke();
 
-    const pct = Math.min(1, this.dist / (TOTAL_DIST - 260));
+    const pct = Math.min(1, this.dist / (this.totalDist - 260));
     ctx.fillStyle = '#22C55E';
     fillRoundRect(ctx, bx + 8, 38, Math.max(28, (bw - 16) * pct), 28, 14);
     ctx.fill();

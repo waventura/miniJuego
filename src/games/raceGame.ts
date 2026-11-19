@@ -62,10 +62,13 @@ export class RaceGame implements MiniGame {
   private playerRank = 1;
   private boostFlash = 0;
 
+  private finishDist: number;
+
   private jumpBtn: Rect = { x: 42, y: 632, w: 320, h: 132 };
   private accelBtn: Rect = { x: GAME_WIDTH - 362, y: 632, w: 320, h: 132 };
 
-  constructor(private playerId: CharacterId) {
+  constructor(private playerId: CharacterId, private level = 1) {
+    this.finishDist = FINISH_DIST + (level - 1) * 900;
     const others = CHARACTERS.filter((c) => c.id !== playerId);
     const cpuPicks = others.slice(0, 3);
     const playerMeta =
@@ -82,7 +85,7 @@ export class RaceGame implements MiniGame {
         yOffset: 0,
         vy: 0,
         stumbleTimer: 0,
-        cpuBaseSpeed: 195 + i * 16,
+        cpuBaseSpeed: 190 + (level - 1) * 18 + i * 16,
         cpuPhase: i * 1.9,
       });
     });
@@ -102,7 +105,8 @@ export class RaceGame implements MiniGame {
     });
 
     // Place kid-friendly spaced cones & puddles on player lane
-    for (let d = 700; d < FINISH_DIST - 450; d += 560 + Math.random() * 240) {
+    const spacing = Math.max(460, 580 - (level - 1) * 50);
+    for (let d = 700; d < this.finishDist - 450; d += spacing + Math.random() * 200) {
       this.obstacles.push({
         dist: d,
         kind: Math.random() < 0.55 ? 'cone' : 'puddle',
@@ -122,14 +126,16 @@ export class RaceGame implements MiniGame {
       if (this.finishTimer >= 1.1) {
         const placeText =
           this.playerRank === 1
-            ? '¡1° LUGAR! ¡SÚPER VELOZ!'
+            ? `¡1° LUGAR! Nivel ${this.level}`
             : this.playerRank === 2
-            ? '¡2° LUGAR! ¡GRAN CARRERA!'
-            : '¡CRUZASTE LA META!';
+            ? `¡2° LUGAR! Nivel ${this.level}`
+            : `¡META! Nivel ${this.level}`;
         return {
           gameId: 'race',
-          gameTitle: 'Pista de Carreras',
+          gameTitle: `Pista de Carreras (Nivel ${this.level})`,
           characterId: this.playerId,
+          level: this.level,
+          maxLevel: 3,
           headline: this.playerRank === 1 ? '¡CAMPEÓN DE LA PISTA!' : '¡LO LOGRASTE!',
           statLabel: placeText,
           medalTitle: 'MEDALLA DE VELOCIDAD',
@@ -233,7 +239,7 @@ export class RaceGame implements MiniGame {
     this.sparks = this.sparks.filter((s) => s.life > 0);
 
     // Check finish
-    if (player.dist >= FINISH_DIST) {
+    if (player.dist >= this.finishDist) {
       this.finished = true;
       this.finishTimer = 0;
       this.playerRank =
@@ -288,7 +294,7 @@ export class RaceGame implements MiniGame {
 
     // Distance markers every 800 px
     ctx.fillStyle = 'rgba(255,255,255,0.28)';
-    for (let d = 800; d < FINISH_DIST; d += 800) {
+    for (let d = 800; d < this.finishDist; d += 800) {
       const sx = d - camX;
       if (sx > -40 && sx < GAME_WIDTH + 40) {
         ctx.fillRect(sx, 352, 8, 258);
@@ -296,7 +302,7 @@ export class RaceGame implements MiniGame {
     }
 
     // Checkered finish line!
-    const finishX = FINISH_DIST - camX;
+    const finishX = this.finishDist - camX;
     if (finishX > -120 && finishX < GAME_WIDTH + 160) {
       const sq = 22;
       for (let row = 0; row < 12; row++) {
@@ -423,7 +429,7 @@ export class RaceGame implements MiniGame {
 
     // Racer dots
     for (const r of this.racers) {
-      const pct = Math.min(1, r.dist / FINISH_DIST);
+      const pct = Math.min(1, r.dist / this.finishDist);
       const px = bx + 26 + pct * (bw - 72);
       ctx.fillStyle = r.isPlayer ? '#EF4444' : '#64748B';
       ctx.strokeStyle = '#FFFFFF';

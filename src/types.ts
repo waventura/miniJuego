@@ -15,7 +15,8 @@ export type GameId =
   | 'classroom'
   | 'mountain'
   | 'soccer'
-  | 'dinos';
+  | 'dinos'
+  | 'cars';
 
 export type ScreenId = 'select' | 'menu' | 'playing' | 'victory';
 
@@ -93,6 +94,8 @@ export interface VictoryData {
   gameId: GameId;
   gameTitle: string;
   characterId: CharacterId;
+  level: number;
+  maxLevel: number;
   headline: string;
   statLabel: string;
   medalTitle: string;

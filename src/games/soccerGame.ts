@@ -52,6 +52,8 @@ export class SoccerGame implements MiniGame {
   private finishTimer = 0;
   private kickHeld = false;
 
+  private goalsToWin: number;
+
   private kickBtn: Rect = {
     x: GAME_WIDTH - 340,
     y: 636,
@@ -59,9 +61,10 @@ export class SoccerGame implements MiniGame {
     h: 126,
   };
 
-  constructor(private playerId: CharacterId) {
+  constructor(private playerId: CharacterId, private level = 1) {
+    this.goalsToWin = 4 + (level - 1) * 2;
     const others = CHARACTERS.filter((c) => c.id !== playerId);
-    this.keeperId = others[0]?.id ?? 'dino';
+    this.keeperId = others[(level - 1) % others.length]?.id ?? 'dino';
   }
 
   public update(dt: number, input: InputSnapshot): VictoryData | null {
@@ -73,8 +76,10 @@ export class SoccerGame implements MiniGame {
       if (this.finishTimer >= 1.2) {
         return {
           gameId: 'soccer',
-          gameTitle: '¡Goles de Fútbol!',
+          gameTitle: `¡Goles de Fútbol! (Nivel ${this.level})`,
           characterId: this.playerId,
+          level: this.level,
+          maxLevel: 3,
           headline: '¡SÚPER GOLEADOR!',
           statLabel: `⚽ ¡Anotaste ${this.goals} GOLAZOS!`,
           medalTitle: 'MEDALLA DE FÚTBOL',
@@ -151,7 +156,7 @@ export class SoccerGame implements MiniGame {
           this.bannerTimer = 1.1;
           sound.playBonus();
           this.spawnGoalSparks(this.targetX, this.targetY);
-          if (this.goals >= GOALS_TO_WIN) {
+          if (this.goals >= this.goalsToWin) {
             this.finished = true;
             this.finishTimer = 0;
             sound.playFlagPlant();
@@ -320,23 +325,26 @@ export class SoccerGame implements MiniGame {
       ctx.restore();
     }
 
-    // Top Score HUD (5 star/goal slots)
+    // Top Score HUD (4, 6, or 8 goal slots)
     ctx.save();
+    const hudW = Math.max(380, this.goalsToWin * 58 + 70);
     ctx.fillStyle = 'rgba(255,255,255,0.95)';
     ctx.strokeStyle = '#15803D';
     ctx.lineWidth = 4;
-    fillRoundRect(ctx, GAME_WIDTH / 2 - 210, 22, 420, 60, 28);
+    fillRoundRect(ctx, GAME_WIDTH / 2 - hudW / 2, 22, hudW, 60, 28);
     ctx.fill();
     ctx.stroke();
 
-    for (let i = 0; i < GOALS_TO_WIN; i++) {
-      const sx = GAME_WIDTH / 2 - 140 + i * 70;
+    const spacing = (hudW - 90) / Math.max(1, this.goalsToWin - 1);
+    const startX = GAME_WIDTH / 2 - (hudW - 90) / 2;
+    for (let i = 0; i < this.goalsToWin; i++) {
+      const sx = startX + i * spacing;
       if (i < this.goals) {
-        drawStar(ctx, sx, 52, 22, 0);
+        drawStar(ctx, sx, 52, 20, 0);
       } else {
         ctx.fillStyle = '#CBD5E1';
         ctx.beginPath();
-        ctx.arc(sx, 52, 16, 0, Math.PI * 2);
+        ctx.arc(sx, 52, 14, 0, Math.PI * 2);
         ctx.fill();
       }
     }

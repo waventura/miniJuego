@@ -35,13 +35,33 @@ const CONFETTI_COLORS = [
 export class VictoryScreen {
   private time = 0;
   private confetti: ConfettiPiece[] = [];
-  private replayBtn: Rect = {
+
+  private nextLevelBtn: Rect = {
+    x: GAME_WIDTH / 2 - 470,
+    y: GAME_HEIGHT - 134,
+    w: 360,
+    h: 92,
+  };
+  private replayBtn3: Rect = {
+    x: GAME_WIDTH / 2 - 80,
+    y: GAME_HEIGHT - 134,
+    w: 250,
+    h: 92,
+  };
+  private menuBtn3: Rect = {
+    x: GAME_WIDTH / 2 + 200,
+    y: GAME_HEIGHT - 134,
+    w: 270,
+    h: 92,
+  };
+
+  private replayBtn2: Rect = {
     x: GAME_WIDTH / 2 - 390,
     y: GAME_HEIGHT - 134,
     w: 360,
     h: 92,
   };
-  private menuBtn: Rect = {
+  private menuBtn2: Rect = {
     x: GAME_WIDTH / 2 + 30,
     y: GAME_HEIGHT - 134,
     w: 360,
@@ -68,8 +88,9 @@ export class VictoryScreen {
 
   public update(
     dt: number,
-    input: InputSnapshot
-  ): 'replay' | 'menu' | null {
+    input: InputSnapshot,
+    data: VictoryData
+  ): 'nextLevel' | 'replay' | 'menu' | null {
     this.time += dt;
 
     for (const c of this.confetti) {
@@ -83,13 +104,29 @@ export class VictoryScreen {
     }
 
     if (this.time > 0.35) {
-      if (isRectJustPressed(input, this.replayBtn)) {
-        sound.playBonus();
-        return 'replay';
-      }
-      if (isRectJustPressed(input, this.menuBtn)) {
-        sound.playTap();
-        return 'menu';
+      const hasNext = data.level < data.maxLevel;
+      if (hasNext) {
+        if (isRectJustPressed(input, this.nextLevelBtn)) {
+          sound.playBonus();
+          return 'nextLevel';
+        }
+        if (isRectJustPressed(input, this.replayBtn3)) {
+          sound.playTap();
+          return 'replay';
+        }
+        if (isRectJustPressed(input, this.menuBtn3)) {
+          sound.playTap();
+          return 'menu';
+        }
+      } else {
+        if (isRectJustPressed(input, this.replayBtn2)) {
+          sound.playBonus();
+          return 'replay';
+        }
+        if (isRectJustPressed(input, this.menuBtn2)) {
+          sound.playTap();
+          return 'menu';
+        }
       }
     }
     return null;
@@ -100,7 +137,7 @@ export class VictoryScreen {
     data: VictoryData,
     input: InputSnapshot
   ): void {
-    // Festive radial-like flat rays background
+    // Festive radial rays background
     ctx.fillStyle = '#1D4ED8';
     ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
@@ -137,18 +174,18 @@ export class VictoryScreen {
 
     // Headline
     ctx.fillStyle = '#EA580C';
-    ctx.font = '900 58px "Fredoka", "Trebuchet MS", sans-serif';
+    ctx.font = '900 54px "Fredoka", "Trebuchet MS", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(data.headline, GAME_WIDTH / 2, 134);
+    ctx.fillText(data.headline, GAME_WIDTH / 2, 132);
 
     // Game & Character subtitle
     ctx.fillStyle = '#1E3A8A';
-    ctx.font = '800 30px "Fredoka", "Trebuchet MS", sans-serif';
+    ctx.font = '800 28px "Fredoka", "Trebuchet MS", sans-serif';
     ctx.fillText(
       `¡Bravo ${charMeta.name}! — ${data.gameTitle}`,
       GAME_WIDTH / 2,
-      194
+      192
     );
 
     // Character celebrating on left
@@ -190,11 +227,11 @@ export class VictoryScreen {
     ctx.stroke();
 
     ctx.fillStyle = '#B45309';
-    ctx.font = '900 28px "Fredoka", "Trebuchet MS", sans-serif';
+    ctx.font = '900 27px "Fredoka", "Trebuchet MS", sans-serif';
     ctx.fillText(data.medalTitle, GAME_WIDTH / 2 + 195, 508);
 
     ctx.fillStyle = '#1E293B';
-    ctx.font = '800 24px "Fredoka", "Trebuchet MS", sans-serif';
+    ctx.font = '800 23px "Fredoka", "Trebuchet MS", sans-serif';
     ctx.fillText(data.statLabel, GAME_WIDTH / 2 + 195, 544);
 
     ctx.restore();
@@ -210,24 +247,57 @@ export class VictoryScreen {
     }
 
     // Bottom big buttons
-    drawTactileButton(ctx, {
-      rect: this.replayBtn,
-      label: '↻  ¡OTRA VEZ!',
-      bg: '#22C55E',
-      border: '#15803D',
-      fontSize: 36,
-      pressed: isRectHeld(input, this.replayBtn),
-      radius: 26,
-    });
+    const hasNext = data.level < data.maxLevel;
+    if (hasNext) {
+      drawTactileButton(ctx, {
+        rect: this.nextLevelBtn,
+        label: `▶ ¡NIVEL ${data.level + 1}!`,
+        bg: '#22C55E',
+        border: '#15803D',
+        fontSize: 38,
+        pressed: isRectHeld(input, this.nextLevelBtn),
+        radius: 26,
+      });
 
-    drawTactileButton(ctx, {
-      rect: this.menuBtn,
-      label: '★  MÁS JUEGOS',
-      bg: '#F59E0B',
-      border: '#B45309',
-      fontSize: 36,
-      pressed: isRectHeld(input, this.menuBtn),
-      radius: 26,
-    });
+      drawTactileButton(ctx, {
+        rect: this.replayBtn3,
+        label: '↻ REPETIR',
+        bg: '#2563EB',
+        border: '#1E3A8A',
+        fontSize: 28,
+        pressed: isRectHeld(input, this.replayBtn3),
+        radius: 26,
+      });
+
+      drawTactileButton(ctx, {
+        rect: this.menuBtn3,
+        label: '★ JUEGOS',
+        bg: '#F59E0B',
+        border: '#B45309',
+        fontSize: 28,
+        pressed: isRectHeld(input, this.menuBtn3),
+        radius: 26,
+      });
+    } else {
+      drawTactileButton(ctx, {
+        rect: this.replayBtn2,
+        label: '↻  ¡OTRA VEZ!',
+        bg: '#22C55E',
+        border: '#15803D',
+        fontSize: 36,
+        pressed: isRectHeld(input, this.replayBtn2),
+        radius: 26,
+      });
+
+      drawTactileButton(ctx, {
+        rect: this.menuBtn2,
+        label: '★  MÁS JUEGOS',
+        bg: '#F59E0B',
+        border: '#B45309',
+        fontSize: 36,
+        pressed: isRectHeld(input, this.menuBtn2),
+        radius: 26,
+      });
+    }
   }
 }

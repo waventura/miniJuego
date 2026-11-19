@@ -54,10 +54,15 @@ export class ClassroomGame implements MiniGame {
   private finished = false;
   private finishTimer = 0;
 
+  private roundSeconds: number;
+
   private leftBtn: Rect = { x: 34, y: 650, w: 230, h: 118 };
   private rightBtn: Rect = { x: GAME_WIDTH - 264, y: 650, w: 230, h: 118 };
 
-  constructor(private playerId: CharacterId) {}
+  constructor(private playerId: CharacterId, private level = 1) {
+    this.roundSeconds = ROUND_SECONDS + (level - 1) * 4;
+    this.remaining = this.roundSeconds;
+  }
 
   public update(dt: number, input: InputSnapshot): VictoryData | null {
     this.time += dt;
@@ -67,8 +72,10 @@ export class ClassroomGame implements MiniGame {
       if (this.finishTimer >= 1.0) {
         return {
           gameId: 'classroom',
-          gameTitle: 'Salón de Clases',
+          gameTitle: `Salón de Clases (Nivel ${this.level})`,
           characterId: this.playerId,
+          level: this.level,
+          maxLevel: 3,
           headline: '¡SÚPER ESTUDIANTE!',
           statLabel: `¡Atrapaste ${this.score} puntos y ${this.diplomas} diplomas!`,
           medalTitle: 'MEDALLA DE HONOR',
@@ -291,7 +298,7 @@ export class ClassroomGame implements MiniGame {
     ctx.fill();
     ctx.stroke();
 
-    const pct = this.remaining / ROUND_SECONDS;
+    const pct = this.remaining / this.roundSeconds;
     ctx.fillStyle = pct > 0.25 ? '#22C55E' : '#EF4444';
     fillRoundRect(ctx, 634, 34, Math.max(24, 340 * pct), 32, 16);
     ctx.fill();

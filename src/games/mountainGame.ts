@@ -53,12 +53,12 @@ export class MountainGame implements MiniGame {
   private rightBtn: Rect = { x: 252, y: 636, w: 190, h: 128 };
   private jumpBtn: Rect = { x: GAME_WIDTH - 338, y: 636, w: 296, h: 128 };
 
-  constructor(private playerId: CharacterId) {
+  constructor(private playerId: CharacterId, private level = 1) {
     // Base meadow floor
     this.platforms.push({ x: 80, y: 600, w: GAME_WIDTH - 160 });
 
-    // Build 11 easy-to-reach zigzag platforms climbing upward
-    const levels = 11;
+    // Build easy-to-reach zigzag platforms climbing upward (9, 12, or 15 levels)
+    const levels = 9 + (level - 1) * 3;
     let y = 475;
     for (let i = 0; i < levels; i++) {
       const w = 320;
@@ -95,8 +95,10 @@ export class MountainGame implements MiniGame {
       if (this.finishTimer >= 1.45) {
         return {
           gameId: 'mountain',
-          gameTitle: 'Escalada a la Montaña',
+          gameTitle: `Escalada a la Montaña (Nivel ${this.level})`,
           characterId: this.playerId,
+          level: this.level,
+          maxLevel: 3,
           headline: '¡LLEGASTE A LA CIMA!',
           statLabel: `¡Bandera plantada y ${this.starsCollected} ★!`,
           medalTitle: 'MEDALLA DE GRADUADO',
