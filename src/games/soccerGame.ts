@@ -47,11 +47,25 @@ export class SoccerGame implements MiniGame {
   private keeperDir = 1;
   private keeperDiveOffset = 0;
 
-  // Moving defender barrier (from Level 3+)
+  // Moving defender barrier (from Level 2+)
   private hasBarrier: boolean;
   private barrierX = GAME_WIDTH / 2;
   private barrierDir = -1;
   private barrierWidth: number;
+
+  // Upper sliding target-blocker shields inside goal (from Level 4+, 2 shields on Level 8+)
+  private hasTopShield: boolean;
+  private topShieldX = GOAL_LEFT + 180;
+  private topShieldDir = 1;
+  private hasSecondShield: boolean;
+  private secondShieldX = GOAL_RIGHT - 180;
+  private secondShieldDir = -1;
+
+  // Jumping central defender (from Level 6+)
+  private hasCenterDefender: boolean;
+  private defenderId: CharacterId;
+  private defenderX = GAME_WIDTH / 2;
+  private defenderJump = 0;
 
   // Golden Bonus Ring inside goal corner (worth +2 goals!)
   private bonusX = GOAL_LEFT + 115;
@@ -101,11 +115,15 @@ export class SoccerGame implements MiniGame {
     this.goalsToWin = Math.min(8, 3 + Math.ceil(level / 2)); // 4..8 goals
     this.shotsLeft = this.goalsToWin + Math.max(3, 7 - Math.floor(level / 2));
 
-    this.hasBarrier = level >= 3;
-    this.barrierWidth = level >= 7 ? 150 : 96;
+    this.hasBarrier = level >= 2;
+    this.barrierWidth = level >= 7 ? 168 : level >= 4 ? 132 : 96;
+    this.hasTopShield = level >= 4;
+    this.hasSecondShield = level >= 8;
+    this.hasCenterDefender = level >= 6;
 
     const others = CHARACTERS.filter((c) => c.id !== playerId);
     this.keeperId = others[(level - 1) % others.length]?.id ?? 'dino';
+    this.defenderId = others[level % others.length]?.id ?? 'pilot';
     this.placeBonusRing();
   }
 
@@ -191,9 +209,9 @@ export class SoccerGame implements MiniGame {
       this.keeperDir = 1;
     }
 
-    // Moving defender barrier (Level 3+)
+    // Moving defender barrier (Level 2+)
     if (this.hasBarrier) {
-      const barrierSpeed = 110 + (this.level - 3) * 28;
+      const barrierSpeed = 125 + (this.level - 2) * 30;
       this.barrierX += this.barrierDir * barrierSpeed * dt;
       if (this.barrierX > GOAL_RIGHT - 120) {
         this.barrierX = GOAL_RIGHT - 120;
@@ -202,6 +220,37 @@ export class SoccerGame implements MiniGame {
         this.barrierX = GOAL_LEFT + 120;
         this.barrierDir = 1;
       }
+    }
+
+    // Upper sliding blocker shields (Level 4+ and Level 8+)
+    if (this.hasTopShield) {
+      const shieldSpeed = 160 + (this.level - 4) * 32;
+      this.topShieldX += this.topShieldDir * shieldSpeed * dt;
+      if (this.topShieldX > GOAL_RIGHT - 78) {
+        this.topShieldX = GOAL_RIGHT - 78;
+        this.topShieldDir = -1;
+      } else if (this.topShieldX < GOAL_LEFT + 78) {
+        this.topShieldX = GOAL_LEFT + 78;
+        this.topShieldDir = 1;
+      }
+    }
+    if (this.hasSecondShield) {
+      const s2Speed = 200 + (this.level - 8) * 35;
+      this.secondShieldX += this.secondShieldDir * s2Speed * dt;
+      if (this.secondShieldX > GOAL_RIGHT - 78) {
+        this.secondShieldX = GOAL_RIGHT - 78;
+        this.secondShieldDir = -1;
+      } else if (this.secondShieldX < GOAL_LEFT + 78) {
+        this.secondShieldX = GOAL_LEFT + 78;
+        this.secondShieldDir = 1;
+      }
+    }
+
+    // Jumping central defender (Level 6+)
+    if (this.hasCenterDefender) {
+      this.defenderX = GAME_WIDTH / 2 + Math.sin(this.time * 1.9) * 185;
+      const jumpWave = Math.sin(this.time * 3.6);
+      this.defenderJump = jumpWave > 0.25 ? (jumpWave - 0.25) * 95 : 0;
     }
 
     // Aiming reticle sweeps faster on higher levels
@@ -272,12 +321,35 @@ export class SoccerGame implements MiniGame {
       if (t >= 1) {
         const hitBarrier =
           this.hasBarrier &&
-          this.targetY > 275 &&
+          this.targetY > 270 &&
           Math.abs(this.targetX - this.barrierX) < this.barrierWidth * 0.48;
+        const hitTopShield =
+          (this.hasTopShield &&
+            this.targetY < 268 &&
+            Math.abs(this.targetX - this.topShieldX) < 58) ||
+          (this.hasSecondShield &&
+            this.targetY < 285 &&
+            Math.abs(this.targetX - this.secondShieldX) < 56);
+        const hitDefender =
+          this.hasCenterDefender &&
+          Math.abs(this.targetX - this.defenderX) < 54 &&
+          this.targetY > 305 - this.defenderJump;
         const saveReach = 66 + Math.min(26, this.level * 2.5);
         const saved = Math.abs(this.targetX - this.keeperX) < saveReach;
 
-        if (hitBarrier) {
+        if (hitTopShield) {
+          this.streak = 0;
+          this.bannerText = '¡PEGÓ EN EL ESCUDO!';
+          this.bannerSub = '¡Busca el espacio libre!';
+          this.bannerTimer = 1.0;
+          sound.playBonk();
+        } else if (hitDefender) {
+          this.streak = 0;
+          this.bannerText = '¡BLOQUEÓ EL DEFENSA!';
+          this.bannerSub = '¡Esquiva al defensa!';
+          this.bannerTimer = 1.0;
+          sound.playBonk();
+        } else if (hitBarrier) {
           this.streak = 0;
           this.bannerText = '¡PEGÓ EN LA BARRERA!';
           this.bannerSub = '¡Apunta arriba o a los lados!';
@@ -467,6 +539,14 @@ export class SoccerGame implements MiniGame {
     ctx.lineTo(GOAL_RIGHT, GOAL_BOTTOM);
     ctx.stroke();
 
+    // Upper sliding blocker shields (Level 4+ and Level 8+)
+    if (this.hasTopShield) {
+      this.drawBlockerShield(ctx, this.topShieldX, GOAL_TOP + 54, '#2563EB');
+    }
+    if (this.hasSecondShield) {
+      this.drawBlockerShield(ctx, this.secondShieldX, GOAL_TOP + 68, '#7C3AED');
+    }
+
     // Goalkeeper
     drawCharacter(ctx, {
       id: this.keeperId,
@@ -478,13 +558,26 @@ export class SoccerGame implements MiniGame {
       time: this.time * 1.4,
     });
 
-    // Moving defender barrier (cones / training wall in front of goal from Level 3+)
+    // Jumping central defender (Level 6+)
+    if (this.hasCenterDefender) {
+      drawCharacter(ctx, {
+        id: this.defenderId,
+        x: this.defenderX,
+        y: 454 - this.defenderJump,
+        scale: 1.02,
+        facing: Math.cos(this.time * 1.9) >= 0 ? 1 : -1,
+        anim: this.defenderJump > 8 ? 'jump' : 'run',
+        time: this.time * 1.3,
+      });
+    }
+
+    // Moving defender barrier (cones in front of goal from Level 2+)
     if (this.hasBarrier) {
       const count = this.level >= 7 ? 3 : 2;
       const step = this.barrierWidth / count;
       for (let i = 0; i < count; i++) {
         const bx = this.barrierX - this.barrierWidth / 2 + step * (i + 0.5);
-        drawCone(ctx, bx, 468, 1.12);
+        drawCone(ctx, bx, 488, 1.12);
       }
     }
 
@@ -656,6 +749,34 @@ export class SoccerGame implements MiniGame {
     ctx.fillStyle = this.shotsLeft <= 2 ? '#DC2626' : '#1E3A8A';
     ctx.font = '900 25px "Fredoka", sans-serif';
     ctx.fillText(`⚽ BALONES: ${this.shotsLeft}`, 1072, 51);
+    ctx.restore();
+  }
+
+  private drawBlockerShield(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    color: string
+  ): void {
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.fillStyle = color;
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 4;
+    fillRoundRect(ctx, -46, -34, 92, 68, 16);
+    ctx.fill();
+    ctx.stroke();
+
+    // Red X block emblem
+    ctx.strokeStyle = '#FACC15';
+    ctx.lineWidth = 7;
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.moveTo(-18, -14);
+    ctx.lineTo(18, 14);
+    ctx.moveTo(18, -14);
+    ctx.lineTo(-18, 14);
+    ctx.stroke();
     ctx.restore();
   }
 
