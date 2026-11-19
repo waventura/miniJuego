@@ -61,11 +61,11 @@ export class SoccerGame implements MiniGame {
   private secondShieldX = GOAL_RIGHT - 180;
   private secondShieldDir = -1;
 
-  // Jumping central defender (from Level 6+)
-  private hasCenterDefender: boolean;
-  private defenderId: CharacterId;
-  private defenderX = GAME_WIDTH / 2;
-  private defenderJump = 0;
+  // Vertical side barriers moving up & down on left/right sides of goal (Level 5+ left, Level 7+ both!)
+  private hasLeftSideBarrier: boolean;
+  private hasRightSideBarrier: boolean;
+  private leftSideY = GOAL_TOP + 120;
+  private rightSideY = GOAL_BOTTOM - 80;
 
   // Golden Bonus Ring inside goal corner (worth +2 goals!)
   private bonusX = GOAL_LEFT + 115;
@@ -119,11 +119,11 @@ export class SoccerGame implements MiniGame {
     this.barrierWidth = level >= 7 ? 168 : level >= 4 ? 132 : 96;
     this.hasTopShield = level >= 4;
     this.hasSecondShield = level >= 8;
-    this.hasCenterDefender = level >= 6;
+    this.hasLeftSideBarrier = level >= 5;
+    this.hasRightSideBarrier = level >= 7;
 
     const others = CHARACTERS.filter((c) => c.id !== playerId);
     this.keeperId = others[(level - 1) % others.length]?.id ?? 'dino';
-    this.defenderId = others[level % others.length]?.id ?? 'pilot';
     this.placeBonusRing();
   }
 
@@ -246,11 +246,15 @@ export class SoccerGame implements MiniGame {
       }
     }
 
-    // Jumping central defender (Level 6+)
-    if (this.hasCenterDefender) {
-      this.defenderX = GAME_WIDTH / 2 + Math.sin(this.time * 1.9) * 185;
-      const jumpWave = Math.sin(this.time * 3.6);
-      this.defenderJump = jumpWave > 0.25 ? (jumpWave - 0.25) * 95 : 0;
+    // Vertical side barriers moving up & down on left/right sides of goal!
+    const sideSpeed = 2.0 + (this.level - 5) * 0.28;
+    const midY = (GOAL_TOP + GOAL_BOTTOM) / 2;
+    const ampY = (GOAL_BOTTOM - GOAL_TOP) / 2 - 58;
+    if (this.hasLeftSideBarrier) {
+      this.leftSideY = midY + Math.sin(this.time * sideSpeed) * ampY;
+    }
+    if (this.hasRightSideBarrier) {
+      this.rightSideY = midY + Math.sin(this.time * sideSpeed + Math.PI) * ampY;
     }
 
     // Aiming reticle sweeps faster on higher levels
@@ -330,10 +334,13 @@ export class SoccerGame implements MiniGame {
           (this.hasSecondShield &&
             this.targetY < 285 &&
             Math.abs(this.targetX - this.secondShieldX) < 56);
-        const hitDefender =
-          this.hasCenterDefender &&
-          Math.abs(this.targetX - this.defenderX) < 54 &&
-          this.targetY > 305 - this.defenderJump;
+        const hitSideBarrier =
+          (this.hasLeftSideBarrier &&
+            Math.abs(this.targetX - (GOAL_LEFT + 54)) < 52 &&
+            Math.abs(this.targetY - this.leftSideY) < 62) ||
+          (this.hasRightSideBarrier &&
+            Math.abs(this.targetX - (GOAL_RIGHT - 54)) < 52 &&
+            Math.abs(this.targetY - this.rightSideY) < 62);
         const saveReach = 66 + Math.min(26, this.level * 2.5);
         const saved = Math.abs(this.targetX - this.keeperX) < saveReach;
 
@@ -343,10 +350,10 @@ export class SoccerGame implements MiniGame {
           this.bannerSub = '¡Busca el espacio libre!';
           this.bannerTimer = 1.0;
           sound.playBonk();
-        } else if (hitDefender) {
+        } else if (hitSideBarrier) {
           this.streak = 0;
-          this.bannerText = '¡BLOQUEÓ EL DEFENSA!';
-          this.bannerSub = '¡Esquiva al defensa!';
+          this.bannerText = '¡PEGÓ EN LA BARRERA LATERAL!';
+          this.bannerSub = '¡Espera a que suba o baje!';
           this.bannerTimer = 1.0;
           sound.playBonk();
         } else if (hitBarrier) {
@@ -558,17 +565,12 @@ export class SoccerGame implements MiniGame {
       time: this.time * 1.4,
     });
 
-    // Jumping central defender (Level 6+)
-    if (this.hasCenterDefender) {
-      drawCharacter(ctx, {
-        id: this.defenderId,
-        x: this.defenderX,
-        y: 454 - this.defenderJump,
-        scale: 1.02,
-        facing: Math.cos(this.time * 1.9) >= 0 ? 1 : -1,
-        anim: this.defenderJump > 8 ? 'jump' : 'run',
-        time: this.time * 1.3,
-      });
+    // Vertical side barriers moving up & down on left/right sides of goal!
+    if (this.hasLeftSideBarrier) {
+      this.drawSideBarrier(ctx, GOAL_LEFT + 54, this.leftSideY);
+    }
+    if (this.hasRightSideBarrier) {
+      this.drawSideBarrier(ctx, GOAL_RIGHT - 54, this.rightSideY);
     }
 
     // Moving defender barrier (cones in front of goal from Level 2+)
@@ -777,6 +779,35 @@ export class SoccerGame implements MiniGame {
     ctx.moveTo(18, -14);
     ctx.lineTo(-18, 14);
     ctx.stroke();
+    ctx.restore();
+  }
+
+  private drawSideBarrier(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number
+  ): void {
+    ctx.save();
+    ctx.translate(x, y);
+    // Vertical guide rail
+    ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+    ctx.lineWidth = 6;
+    ctx.beginPath();
+    ctx.moveTo(0, -64);
+    ctx.lineTo(0, 64);
+    ctx.stroke();
+
+    // Bright orange/yellow striped vertical blocker panel
+    ctx.fillStyle = '#F97316';
+    ctx.strokeStyle = '#FFFFFF';
+    ctx.lineWidth = 4;
+    fillRoundRect(ctx, -32, -54, 64, 108, 16);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = '#FACC15';
+    ctx.fillRect(-26, -28, 52, 16);
+    ctx.fillRect(-26, 12, 52, 16);
     ctx.restore();
   }
 
