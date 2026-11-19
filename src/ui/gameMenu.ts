@@ -47,15 +47,7 @@ export class GameMenuScreen {
   };
 
   constructor() {
-    // Symmetric 5x2 grid for all 10 mini-games!
-    const cols = 5;
-    const cardW = 244;
-    const cardH = 242;
-    const gapX = 16;
-    const gapY = 22;
-    const startX = (GAME_WIDTH - (cardW * cols + gapX * (cols - 1))) / 2;
-    const startY = 134;
-
+    // 11 Mini-Games: Top row 6 cards, Bottom row 5 cards
     const defs: Array<Omit<GameCardInfo, 'rect'>> = [
       {
         id: 'race',
@@ -119,7 +111,6 @@ export class GameMenuScreen {
         subtitle: '3 niveles • ¡Flappy!',
         bg: '#14B8A6',
         border: '#0F766E',
-        isNew: true,
       },
       {
         id: 'tictactoe',
@@ -127,20 +118,49 @@ export class GameMenuScreen {
         subtitle: '1P o 2P • ¡3 en raya!',
         bg: '#2563EB',
         border: '#1E3A8A',
+      },
+      {
+        id: 'waterballoons',
+        title: '11. GLOBOS',
+        subtitle: '5 niveles • ¡SPLASH!',
+        bg: '#06B6D4',
+        border: '#0E7490',
         isNew: true,
       },
     ];
 
+    const row1W = 204;
+    const row1H = 242;
+    const gap1 = 14;
+    const startX1 = (GAME_WIDTH - (row1W * 6 + gap1 * 5)) / 2;
+    const y1 = 132;
+
+    const row2W = 244;
+    const row2H = 242;
+    const gap2 = 16;
+    const startX2 = (GAME_WIDTH - (row2W * 5 + gap2 * 4)) / 2;
+    const y2 = y1 + row1H + 22;
+
     this.cards = defs.map((d, i) => {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
+      if (i < 6) {
+        return {
+          ...d,
+          rect: {
+            x: startX1 + i * (row1W + gap1),
+            y: y1,
+            w: row1W,
+            h: row1H,
+          },
+        };
+      }
+      const col = i - 6;
       return {
         ...d,
         rect: {
-          x: startX + col * (cardW + gapX),
-          y: startY + row * (cardH + gapY),
-          w: cardW,
-          h: cardH,
+          x: startX2 + col * (row2W + gap2),
+          y: y2,
+          w: row2W,
+          h: row2H,
         },
       };
     });
@@ -206,11 +226,12 @@ export class GameMenuScreen {
     );
     ctx.restore();
 
-    // 10 Game Cards (5x2)
+    // 11 Game Cards
     for (const card of this.cards) {
       const pressed = isRectHeld(input, card.rect);
       const offset = pressed ? 6 : 0;
       const r = card.rect;
+      const isNarrow = r.w < 220;
 
       ctx.save();
       ctx.fillStyle = card.border;
@@ -226,10 +247,16 @@ export class GameMenuScreen {
 
       // Top white icon box
       ctx.fillStyle = 'rgba(255,255,255,0.93)';
-      fillRoundRect(ctx, r.x + 14, r.y + offset + 14, r.w - 28, 128, 18);
+      fillRoundRect(ctx, r.x + 12, r.y + offset + 14, r.w - 24, 128, 18);
       ctx.fill();
 
-      this.drawMiniIcon(ctx, card.id, r.x + r.w / 2, r.y + offset + 78, 0.72);
+      this.drawMiniIcon(
+        ctx,
+        card.id,
+        r.x + r.w / 2,
+        r.y + offset + 78,
+        isNarrow ? 0.64 : 0.72
+      );
 
       if (card.isNew) {
         ctx.fillStyle = '#FACC15';
@@ -245,11 +272,11 @@ export class GameMenuScreen {
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.font = '900 22px "Fredoka", "Trebuchet MS", sans-serif';
+      ctx.font = `900 ${isNarrow ? 19 : 22}px "Fredoka", "Trebuchet MS", sans-serif`;
       ctx.fillText(card.title, r.x + r.w / 2, r.y + offset + 170);
 
       ctx.fillStyle = '#FEF9C3';
-      ctx.font = '700 16px "Fredoka", "Trebuchet MS", sans-serif';
+      ctx.font = `700 ${isNarrow ? 14 : 16}px "Fredoka", "Trebuchet MS", sans-serif`;
       ctx.fillText(card.subtitle, r.x + r.w / 2, r.y + offset + 204);
 
       ctx.restore();
@@ -395,7 +422,6 @@ export class GameMenuScreen {
       drawStar(ctx, 27, -2, 22, this.time * 2);
       ctx.restore();
     } else if (id === 'flappy') {
-      // Green pipe + cute flying bird/star with wing!
       ctx.fillStyle = '#22C55E';
       ctx.strokeStyle = '#15803D';
       ctx.lineWidth = 4;
@@ -411,13 +437,11 @@ export class GameMenuScreen {
       ctx.arc(-20, flap * 0.4, 26, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
-      // Wing
       ctx.fillStyle = '#FEF9C3';
       ctx.beginPath();
       ctx.ellipse(-34, 4 + flap * 0.5, 16, 9, -0.3, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
-      // Eye & beak
       ctx.fillStyle = '#0F172A';
       ctx.beginPath();
       ctx.arc(-10, -6 + flap * 0.4, 5, 0, Math.PI * 2);
@@ -429,8 +453,7 @@ export class GameMenuScreen {
       ctx.lineTo(4, 10 + flap * 0.4);
       ctx.closePath();
       ctx.fill();
-    } else {
-      // Tic-Tac-Toe 3x3 mini board with X and O
+    } else if (id === 'tictactoe') {
       ctx.strokeStyle = '#94A3B8';
       ctx.lineWidth = 6;
       ctx.lineCap = 'round';
@@ -445,7 +468,6 @@ export class GameMenuScreen {
       ctx.lineTo(50, 18);
       ctx.stroke();
 
-      // Blue X
       ctx.strokeStyle = '#2563EB';
       ctx.lineWidth = 8;
       ctx.beginPath();
@@ -455,19 +477,52 @@ export class GameMenuScreen {
       ctx.lineTo(-46, -26);
       ctx.stroke();
 
-      // Red O
       ctx.strokeStyle = '#EF4444';
       ctx.beginPath();
       ctx.arc(0, 0, 11, 0, Math.PI * 2);
       ctx.stroke();
 
-      // Blue X bottom right
       ctx.strokeStyle = '#2563EB';
       ctx.beginPath();
       ctx.moveTo(26, 26);
       ctx.lineTo(46, 46);
       ctx.moveTo(46, 26);
       ctx.lineTo(26, 46);
+      ctx.stroke();
+    } else {
+      // Cute yellow duck + colorful water balloon!
+      ctx.fillStyle = '#38BDF8';
+      fillRoundRect(ctx, -64, 24, 128, 32, 10);
+      ctx.fill();
+
+      // Duck
+      ctx.fillStyle = '#FACC15';
+      ctx.strokeStyle = '#92400E';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.ellipse(12, 12, 32, 20, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(30, -14, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#F97316';
+      ctx.beginPath();
+      ctx.ellipse(48, -12, 10, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0F172A';
+      ctx.beginPath();
+      ctx.arc(35, -18, 3.8, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Flying red water balloon!
+      const bob = Math.sin(this.time * 6) * 5;
+      ctx.fillStyle = '#EF4444';
+      ctx.strokeStyle = '#991B1B';
+      ctx.beginPath();
+      ctx.ellipse(-34, -22 + bob, 18, 22, 0.25, 0, Math.PI * 2);
+      ctx.fill();
       ctx.stroke();
     }
 
