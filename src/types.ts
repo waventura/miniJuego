@@ -9,7 +9,13 @@ export type CharacterId =
   | 'astro'
   | 'dino';
 
-export type GameId = 'race' | 'playground' | 'classroom' | 'mountain';
+export type GameId =
+  | 'race'
+  | 'playground'
+  | 'classroom'
+  | 'mountain'
+  | 'soccer'
+  | 'dinos';
 
 export type ScreenId = 'select' | 'menu' | 'playing' | 'victory';
 

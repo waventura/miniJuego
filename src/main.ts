@@ -24,6 +24,8 @@ import { RaceGame } from './games/raceGame';
 import { PlaygroundGame } from './games/playgroundGame';
 import { ClassroomGame } from './games/classroomGame';
 import { MountainGame } from './games/mountainGame';
+import { SoccerGame } from './games/soccerGame';
+import { DinoGame } from './games/dinoGame';
 
 const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
@@ -126,6 +128,12 @@ function launchGame(gameId: GameId): void {
       break;
     case 'mountain':
       activeGame = new MountainGame(selectedCharacter);
+      break;
+    case 'soccer':
+      activeGame = new SoccerGame(selectedCharacter);
+      break;
+    case 'dinos':
+      activeGame = new DinoGame(selectedCharacter);
       break;
   }
   screen = 'playing';
