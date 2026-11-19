@@ -46,7 +46,7 @@ export class TicTacToeGame implements MiniGame {
   private modeBtn: Rect = { x: 46, y: 660, w: 300, h: 86 };
 
   constructor(private playerId: CharacterId, private level = 1) {
-    this.winsNeeded = level; // Level 1: 1 win, Level 2: 2 wins, Level 3: 3 wins
+    this.winsNeeded = Math.min(3, level); // 1, 2, 3, 3, 3 wins
     const others = CHARACTERS.filter((c) => c.id !== playerId);
     // If Carlos plays, Mateo is rival (and vice-versa)!
     const mateoOrCarlos =
@@ -94,7 +94,7 @@ export class TicTacToeGame implements MiniGame {
           gameTitle: `¡X y O! (Nivel ${this.level})`,
           characterId: this.playerId,
           level: this.level,
-          maxLevel: 3,
+          maxLevel: 5,
           headline: '¡CAMPEÓN DE X y O!',
           statLabel: `¡Ganaste ${this.playerWins} ${this.playerWins === 1 ? 'ronda' : 'rondas'}!`,
           medalTitle: 'MEDALLA DE INGENIO',
@@ -166,7 +166,7 @@ export class TicTacToeGame implements MiniGame {
           this.roundPauseTimer = 1.4;
         }
       } else {
-        this.roundBanner = '¡CASI! ¡OTRA RONDA!';
+        this.roundBanner = '¡GANÓ LA CPU! ¡OTRA!';
         sound.playBonk();
         this.roundPauseTimer = 1.4;
       }
@@ -182,7 +182,7 @@ export class TicTacToeGame implements MiniGame {
 
     this.turn = mark === 'X' ? 'O' : 'X';
     if (!this.twoPlayer && this.turn === 'O') {
-      this.cpuThinkTimer = 0.55;
+      this.cpuThinkTimer = 0.45;
     }
   }
 
@@ -199,16 +199,78 @@ export class TicTacToeGame implements MiniGame {
       .filter((i) => i !== -1);
     if (empty.length === 0) return -1;
 
-    // Level 1: super friendly random; Level 2-3: occasionally blocks X
-    if (this.level >= 2 && Math.random() < 0.45) {
+    // 1. Always take an immediate winning move for O!
+    for (const idx of empty) {
+      this.board[idx] = 'O';
+      const wins = this.findWinLine('O') !== null;
+      this.board[idx] = null;
+      if (wins) return idx;
+    }
+
+    // 2. Block X's winning move (60% on Level 1, 100% on Level 2+)
+    if (this.level >= 2 || Math.random() < 0.6) {
       for (const idx of empty) {
         this.board[idx] = 'X';
-        const wouldWin = this.findWinLine('X') !== null;
+        const blocks = this.findWinLine('X') !== null;
         this.board[idx] = null;
-        if (wouldWin) return idx;
+        if (blocks) return idx;
       }
     }
+
+    // 3. Level 3-5: Minimax smart strategy!
+    const smartChance =
+      this.level === 5 ? 0.96 : this.level === 4 ? 0.85 : this.level === 3 ? 0.7 : 0;
+    if (smartChance > 0 && Math.random() < smartChance) {
+      let bestScore = -999;
+      let bestMove = empty[0];
+      for (const idx of empty) {
+        this.board[idx] = 'O';
+        const score = this.minimax(false, 0);
+        this.board[idx] = null;
+        if (score > bestScore) {
+          bestScore = score;
+          bestMove = idx;
+        }
+      }
+      return bestMove;
+    }
+
+    // 4. Take center or a corner on Level 2+
+    if (this.level >= 2) {
+      if (this.board[4] === null) return 4;
+      const corners = [0, 2, 6, 8].filter((c) => this.board[c] === null);
+      if (corners.length > 0) {
+        return corners[Math.floor(Math.random() * corners.length)];
+      }
+    }
+
     return empty[Math.floor(Math.random() * empty.length)];
+  }
+
+  private minimax(isCpuTurn: boolean, depth: number): number {
+    if (this.findWinLine('O')) return 10 - depth;
+    if (this.findWinLine('X')) return depth - 10;
+    if (this.board.every((c) => c !== null)) return 0;
+
+    if (isCpuTurn) {
+      let best = -999;
+      for (let i = 0; i < 9; i++) {
+        if (this.board[i] !== null) continue;
+        this.board[i] = 'O';
+        best = Math.max(best, this.minimax(false, depth + 1));
+        this.board[i] = null;
+      }
+      return best;
+    } else {
+      let best = 999;
+      for (let i = 0; i < 9; i++) {
+        if (this.board[i] !== null) continue;
+        this.board[i] = 'X';
+        best = Math.min(best, this.minimax(true, depth + 1));
+        this.board[i] = null;
+      }
+      return best;
+    }
   }
 
   public render(ctx: CanvasRenderingContext2D): void {
