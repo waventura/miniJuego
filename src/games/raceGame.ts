@@ -35,6 +35,7 @@ interface Racer {
 }
 
 interface Obstacle {
+  lane: number; // 0..3
   dist: number;
   kind: 'cone' | 'puddle';
   hit: boolean;
@@ -106,14 +107,19 @@ export class RaceGame implements MiniGame {
       cpuPhase: 0,
     });
 
-    // Place kid-friendly spaced cones & puddles on player lane
+    // Place cones & puddles on ALL 4 lanes!
     const spacing = Math.max(460, 580 - (level - 1) * 50);
-    for (let d = 700; d < this.finishDist - 450; d += spacing + Math.random() * 200) {
-      this.obstacles.push({
-        dist: d,
-        kind: Math.random() < 0.55 ? 'cone' : 'puddle',
-        hit: false,
-      });
+    for (let lane = 0; lane < 4; lane++) {
+      let d = 680 + lane * 110;
+      while (d < this.finishDist - 450) {
+        this.obstacles.push({
+          lane,
+          dist: d,
+          kind: Math.random() < 0.55 ? 'cone' : 'puddle',
+          hit: false,
+        });
+        d += spacing + Math.random() * 220;
+      }
     }
   }
 
@@ -207,9 +213,9 @@ export class RaceGame implements MiniGame {
       player.vy = 0;
     }
 
-    // Obstacle collisions on player lane
+    // Obstacle collisions on player lane (lane 3)
     for (const obs of this.obstacles) {
-      if (obs.hit) continue;
+      if (obs.hit || obs.lane !== 3) continue;
       if (Math.abs(obs.dist - player.dist) < 42 && player.yOffset > -42) {
         obs.hit = true;
         player.speed = 135;
@@ -232,13 +238,49 @@ export class RaceGame implements MiniGame {
       }
     }
 
-    // Competitive CPU racers!
+    // Competitive CPU racers (they also jump and occasionally stumble on their own lane obstacles!)
     for (const r of this.racers) {
       if (r.isPlayer) continue;
+
+      if (r.stumbleTimer > 0) {
+        r.stumbleTimer = Math.max(0, r.stumbleTimer - dt);
+      }
+
+      // CPU jumps over upcoming obstacle on its lane (~72% success rate so races feel dynamic!)
+      if (r.yOffset >= -2) {
+        const ahead = this.obstacles.find(
+          (o) => !o.hit && o.lane === r.lane && o.dist - r.dist > 55 && o.dist - r.dist < 115
+        );
+        if (ahead && Math.sin(ahead.dist * 0.13 + r.cpuPhase) > -0.45) {
+          r.vy = -730;
+        }
+      }
+
+      r.vy += 1850 * dt;
+      r.yOffset += r.vy * dt;
+      if (r.yOffset > 0) {
+        r.yOffset = 0;
+        r.vy = 0;
+      }
+
+      // Check CPU collision with its lane obstacles
+      for (const obs of this.obstacles) {
+        if (obs.hit || obs.lane !== r.lane) continue;
+        if (Math.abs(obs.dist - r.dist) < 38 && r.yOffset > -40) {
+          obs.hit = true;
+          r.stumbleTimer = 0.55;
+          r.speed = 145;
+        }
+      }
+
       const wave = Math.sin(this.time * 2.1 + r.cpuPhase) * 32;
       const gap = player.dist - r.dist;
       const assist = Math.max(-25, Math.min(45, gap * 0.08));
-      r.speed = Math.max(240, Math.min(410, r.cpuBaseSpeed + wave + assist));
+      const targetSpd =
+        r.stumbleTimer > 0
+          ? 165
+          : Math.max(240, Math.min(410, r.cpuBaseSpeed + wave + assist));
+      r.speed += (targetSpd - r.speed) * Math.min(1, dt * 6);
       r.dist += r.speed * dt;
     }
 
@@ -334,19 +376,21 @@ export class RaceGame implements MiniGame {
       ctx.fillText('META', finishX + 22, 253);
     }
 
-    // Draw obstacles on player's lane
-    for (const obs of this.obstacles) {
-      const sx = obs.dist - camX;
-      if (sx < -80 || sx > GAME_WIDTH + 80) continue;
-      if (obs.kind === 'cone') {
-        drawCone(ctx, sx, LANE_Y[3], 1.0);
-      } else {
-        drawPuddle(ctx, sx, LANE_Y[3], 1.05);
+    // Draw each lane back-to-front: lane obstacles first, then lane racer!
+    for (let lane = 0; lane < 4; lane++) {
+      const laneScale = lane === 3 ? 1.0 : 0.78 + lane * 0.06;
+      for (const obs of this.obstacles) {
+        if (obs.lane !== lane) continue;
+        const sx = obs.dist - camX;
+        if (sx < -80 || sx > GAME_WIDTH + 80) continue;
+        if (obs.kind === 'cone') {
+          drawCone(ctx, sx, LANE_Y[lane], laneScale);
+        } else {
+          drawPuddle(ctx, sx, LANE_Y[lane], laneScale * 1.04);
+        }
       }
-    }
 
-    // Draw all 4 racers back-to-front
-    for (const r of this.racers) {
+      const r = this.racers[lane];
       const sx = r.dist - camX;
       const sy = LANE_Y[r.lane] + r.yOffset;
       const anim = this.finished
