@@ -88,7 +88,7 @@ export class GameMenuScreen {
       {
         id: 'soccer',
         title: '5. FÚTBOL',
-        subtitle: '3 niveles • ¡GOLES!',
+        subtitle: '10 niveles • ¡COPA!',
         bg: '#0EA5E9',
         border: '#0369A1',
       },

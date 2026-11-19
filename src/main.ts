@@ -300,7 +300,7 @@ function loop(now: number): void {
   } else if (screen === 'victory' && victoryData) {
     const action = victoryScreen.update(dt, input, victoryData);
     if (action === 'nextLevel') {
-      launchGame(currentGameId, Math.min(3, currentLevel + 1));
+      launchGame(currentGameId, Math.min(victoryData.maxLevel, currentLevel + 1));
     } else if (action === 'replay') {
       launchGame(currentGameId, currentLevel);
     } else if (action === 'menu') {
