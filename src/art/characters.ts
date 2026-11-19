@@ -90,7 +90,8 @@ function drawHumanFace(
   cheek: string,
   anim: AnimState,
   eyeSize = 4.2,
-  isMateo = false
+  isMateo = false,
+  time = 0
 ): void {
   // Ears
   ctx.fillStyle = skin;
@@ -122,14 +123,18 @@ function drawHumanFace(
   ctx.strokeStyle = '#1E1B18';
   ctx.lineWidth = 2.6;
   ctx.lineCap = 'round';
+  const browLift = anim === 'jump' || anim === 'celebrate' ? -2.2 : 0;
   ctx.beginPath();
-  ctx.moveTo(-14, -9);
-  ctx.quadraticCurveTo(-9, -12, -4, -9.5);
-  ctx.moveTo(4, -9.5);
-  ctx.quadraticCurveTo(9, -12, 14, -9);
+  ctx.moveTo(-14, -9 + browLift);
+  ctx.quadraticCurveTo(-9, -12 + browLift, -4, -9.5 + browLift);
+  ctx.moveTo(4, -9.5 + browLift);
+  ctx.quadraticCurveTo(9, -12 + browLift, 14, -9 + browLift);
   ctx.stroke();
 
-  // Eyes
+  // Eyes (with periodic natural blinking!)
+  const blinkPhase = (time * 1.0 + (isMateo ? 1.4 : 0)) % 3.4;
+  const isBlinking = blinkPhase > 3.24 && anim !== 'celebrate';
+
   if (anim === 'celebrate') {
     // Happy curved eyes ^ ^
     ctx.strokeStyle = '#1E1B18';
@@ -139,6 +144,15 @@ function drawHumanFace(
     ctx.stroke();
     ctx.beginPath();
     ctx.arc(9, -1, 5, Math.PI * 1.1, Math.PI * 1.9);
+    ctx.stroke();
+  } else if (isBlinking) {
+    ctx.strokeStyle = '#1E1B18';
+    ctx.lineWidth = 2.8;
+    ctx.beginPath();
+    ctx.moveTo(-13, -1);
+    ctx.lineTo(-5, -1);
+    ctx.moveTo(5, -1);
+    ctx.lineTo(13, -1);
     ctx.stroke();
   } else {
     ctx.fillStyle = '#1E1B18';
@@ -238,7 +252,30 @@ export function drawCharacter(
       ? Math.sin(stumble * Math.PI * 4) * 0.22
       : 0;
 
+  // Cute cartoon dust puffs behind feet while running!
+  if (anim === 'run') {
+    const puffPhase = (time * 6) % 1;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+    ctx.beginPath();
+    ctx.arc(-20 - puffPhase * 22, -6 - puffPhase * 8, 7 * (1 - puffPhase * 0.6), 0, Math.PI * 2);
+    ctx.arc(-30 - puffPhase * 18, -3 - puffPhase * 5, 5 * (1 - puffPhase * 0.6), 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Cartoon squash & stretch
+  let sx = 1;
+  let sy = 1;
+  if (anim === 'jump') {
+    sx = 0.92;
+    sy = 1.09;
+  } else if (anim === 'celebrate') {
+    const bounce = Math.abs(Math.sin(time * 7));
+    sx = 1 + (0.5 - bounce) * 0.1;
+    sy = 1 + (bounce - 0.5) * 0.12;
+  }
+
   ctx.translate(0, bodyBob);
+  ctx.scale(sx, sy);
   ctx.rotate(lean);
 
   if (id === 'dino') {
@@ -401,7 +438,7 @@ export function drawCharacter(
   const tasselSwing = Math.sin(time * (anim === 'run' ? 12 : 4));
 
   if (id === 'carlos') {
-    drawHumanFace(ctx, '#E8B088', '#F29A8E', anim, 4.1, false);
+    drawHumanFace(ctx, '#E8B088', '#F29A8E', anim, 4.1, false, time);
     // Carlos's neat short black hair
     ctx.fillStyle = '#18181B';
     ctx.beginPath();
@@ -413,7 +450,7 @@ export function drawCharacter(
     // Graduation cap!
     drawGradCap(ctx, 0, -24, 1.05, tasselSwing);
   } else if (id === 'mateo') {
-    drawHumanFace(ctx, '#F3C29F', '#F7A69C', anim, 4.5, true);
+    drawHumanFace(ctx, '#F3C29F', '#F7A69C', anim, 4.5, true, time);
     // Mateo's cute dark hair with slightly wavy/fluffy top
     ctx.fillStyle = '#1F1B18';
     ctx.beginPath();

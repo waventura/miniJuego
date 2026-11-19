@@ -27,6 +27,36 @@ import { MountainGame } from './games/mountainGame';
 import { SoccerGame } from './games/soccerGame';
 import { DinoGame } from './games/dinoGame';
 import { CarRaceGame } from './games/carRaceGame';
+import { MemoryGame } from './games/memoryGame';
+
+interface TouchSparkle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  size: number;
+  color: string;
+  life: number;
+}
+
+const SPARKLE_COLORS = ['#FACC15', '#38BDF8', '#EC4899', '#4ADE80', '#FB923C'];
+let touchSparkles: TouchSparkle[] = [];
+
+function spawnTouchSparkles(x: number, y: number): void {
+  for (let i = 0; i < 7; i++) {
+    const a = (Math.PI * 2 * i) / 7 + Math.random() * 0.4;
+    const spd = 65 + Math.random() * 95;
+    touchSparkles.push({
+      x,
+      y,
+      vx: Math.cos(a) * spd,
+      vy: Math.sin(a) * spd - 30,
+      size: 6 + Math.random() * 5,
+      color: SPARKLE_COLORS[i % SPARKLE_COLORS.length],
+      life: 0.45,
+    });
+  }
+}
 
 const canvas = document.getElementById('game-canvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d')!;
@@ -65,6 +95,7 @@ canvas.addEventListener('pointerdown', (e) => {
   sound.unlock();
   canvas.setPointerCapture(e.pointerId);
   const pos = toCanvasCoords(e.clientX, e.clientY);
+  spawnTouchSparkles(pos.x, pos.y);
   activePointers.set(e.pointerId, {
     id: e.pointerId,
     x: pos.x,
@@ -142,6 +173,9 @@ function launchGame(gameId: GameId, level = 1): void {
       break;
     case 'cars':
       activeGame = new CarRaceGame(selectedCharacter, level);
+      break;
+    case 'memory':
+      activeGame = new MemoryGame(selectedCharacter, level);
       break;
   }
   screen = 'playing';
@@ -277,6 +311,24 @@ function loop(now: number): void {
 
   // Always show sound toggle in top-right
   drawMuteButton(ctx, muteBtn, sound.muted);
+
+  // Global touch sparkles!
+  for (const s of touchSparkles) {
+    s.x += s.vx * dt;
+    s.y += s.vy * dt;
+    s.vy += 180 * dt;
+    s.life -= dt;
+    if (s.life > 0) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, s.life * 2.4);
+      ctx.fillStyle = s.color;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.size * (s.life / 0.45), 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+  touchSparkles = touchSparkles.filter((s) => s.life > 0);
 
   clearFrameInputs();
   requestAnimationFrame(loop);

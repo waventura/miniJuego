@@ -46,27 +46,22 @@ export class GameMenuScreen {
   };
 
   constructor() {
-    // Row 1: 4 cards, Row 2: 3 wider cards (including ¡Súper Carritos!)
-    const row1W = 304;
-    const row1H = 240;
-    const gap1 = 20;
-    const startX1 = (GAME_WIDTH - (row1W * 4 + gap1 * 3)) / 2;
-    const startY1 = 136;
+    // Symmetric 4x2 grid for all 8 mini-games!
+    const cols = 4;
+    const cardW = 304;
+    const cardH = 242;
+    const gapX = 20;
+    const gapY = 22;
+    const startX = (GAME_WIDTH - (cardW * cols + gapX * (cols - 1))) / 2;
+    const startY = 136;
 
-    const row2W = 406;
-    const row2H = 240;
-    const gap2 = 24;
-    const startX2 = (GAME_WIDTH - (row2W * 3 + gap2 * 2)) / 2;
-    const startY2 = startY1 + row1H + 24;
-
-    this.cards = [
+    const defs: Array<Omit<GameCardInfo, 'rect'>> = [
       {
         id: 'race',
         title: '1. CARRERAS',
         subtitle: '3 niveles • ¡Corre!',
         bg: '#EF4444',
         border: '#B91C1C',
-        rect: { x: startX1, y: startY1, w: row1W, h: row1H },
       },
       {
         id: 'playground',
@@ -74,7 +69,6 @@ export class GameMenuScreen {
         subtitle: '3 niveles • ¡Salta!',
         bg: '#22C55E',
         border: '#15803D',
-        rect: { x: startX1 + (row1W + gap1), y: startY1, w: row1W, h: row1H },
       },
       {
         id: 'classroom',
@@ -82,7 +76,6 @@ export class GameMenuScreen {
         subtitle: '3 niveles • ¡Atrapa!',
         bg: '#F59E0B',
         border: '#B45309',
-        rect: { x: startX1 + (row1W + gap1) * 2, y: startY1, w: row1W, h: row1H },
       },
       {
         id: 'mountain',
@@ -90,7 +83,6 @@ export class GameMenuScreen {
         subtitle: '3 niveles • ¡Sube!',
         bg: '#8B5CF6',
         border: '#5B21B6',
-        rect: { x: startX1 + (row1W + gap1) * 3, y: startY1, w: row1W, h: row1H },
       },
       {
         id: 'soccer',
@@ -98,15 +90,13 @@ export class GameMenuScreen {
         subtitle: '3 niveles • ¡GOLAZOS!',
         bg: '#0EA5E9',
         border: '#0369A1',
-        rect: { x: startX2, y: startY2, w: row2W, h: row2H },
       },
       {
         id: 'dinos',
-        title: '6. DINOSAURIOS',
+        title: '6. DINOS',
         subtitle: '3 niveles • ¡Huevos!',
         bg: '#EC4899',
         border: '#9D174D',
-        rect: { x: startX2 + (row2W + gap2), y: startY2, w: row2W, h: row2H },
       },
       {
         id: 'cars',
@@ -114,10 +104,30 @@ export class GameMenuScreen {
         subtitle: '3 niveles • ¡TURBO!',
         bg: '#F97316',
         border: '#C2410C',
-        rect: { x: startX2 + (row2W + gap2) * 2, y: startY2, w: row2W, h: row2H },
+      },
+      {
+        id: 'memory',
+        title: '8. MEMORIA',
+        subtitle: '3 niveles • ¡Parejas!',
+        bg: '#6366F1',
+        border: '#3730A3',
         isNew: true,
       },
     ];
+
+    this.cards = defs.map((d, i) => {
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      return {
+        ...d,
+        rect: {
+          x: startX + col * (cardW + gapX),
+          y: startY + row * (cardH + gapY),
+          w: cardW,
+          h: cardH,
+        },
+      };
+    });
   }
 
   public update(
@@ -180,12 +190,11 @@ export class GameMenuScreen {
     );
     ctx.restore();
 
-    // 7 Game Cards
+    // 8 Game Cards (4x2)
     for (const card of this.cards) {
       const pressed = isRectHeld(input, card.rect);
       const offset = pressed ? 6 : 0;
       const r = card.rect;
-      const isCompact = r.w < 340;
 
       ctx.save();
       ctx.fillStyle = card.border;
@@ -199,60 +208,33 @@ export class GameMenuScreen {
       ctx.fill();
       ctx.stroke();
 
+      // Top white icon box
+      ctx.fillStyle = 'rgba(255,255,255,0.93)';
+      fillRoundRect(ctx, r.x + 18, r.y + offset + 16, r.w - 36, 126, 20);
+      ctx.fill();
+
+      this.drawMiniIcon(ctx, card.id, r.x + r.w / 2, r.y + offset + 79, 0.78);
+
       if (card.isNew) {
         ctx.fillStyle = '#FACC15';
-        fillRoundRect(ctx, r.x + r.w - 118, r.y + offset + 10, 106, 30, 14);
+        fillRoundRect(ctx, r.x + r.w - 114, r.y + offset + 8, 102, 28, 14);
         ctx.fill();
         ctx.fillStyle = '#991B1B';
-        ctx.font = '900 16px "Fredoka", sans-serif';
+        ctx.font = '900 15px "Fredoka", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('★ ¡NUEVO!', r.x + r.w - 65, r.y + offset + 26);
+        ctx.fillText('★ ¡NUEVO!', r.x + r.w - 63, r.y + offset + 23);
       }
 
-      if (isCompact) {
-        // Top icon box, bottom title (for 4-column top row)
-        ctx.fillStyle = 'rgba(255,255,255,0.93)';
-        fillRoundRect(ctx, r.x + 20, r.y + offset + 16, r.w - 40, 122, 20);
-        ctx.fill();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.font = '900 24px "Fredoka", "Trebuchet MS", sans-serif';
+      ctx.fillText(card.title, r.x + r.w / 2, r.y + offset + 170);
 
-        this.drawMiniIcon(ctx, card.id, r.x + r.w / 2, r.y + offset + 77, 0.78);
-
-        ctx.fillStyle = '#FFFFFF';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.font = '900 24px "Fredoka", "Trebuchet MS", sans-serif';
-        ctx.fillText(card.title, r.x + r.w / 2, r.y + offset + 166);
-
-        ctx.fillStyle = '#FEF9C3';
-        ctx.font = '700 18px "Fredoka", "Trebuchet MS", sans-serif';
-        ctx.fillText(card.subtitle, r.x + r.w / 2, r.y + offset + 200);
-      } else {
-        // Left icon box, right title (for 3-column bottom row)
-        ctx.fillStyle = 'rgba(255,255,255,0.93)';
-        fillRoundRect(ctx, r.x + 18, r.y + offset + 22, 138, r.h - 44, 22);
-        ctx.fill();
-
-        this.drawMiniIcon(ctx, card.id, r.x + 87, r.y + offset + r.h / 2, 0.84);
-
-        ctx.fillStyle = '#FFFFFF';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'middle';
-        ctx.font = '900 25px "Fredoka", "Trebuchet MS", sans-serif';
-        ctx.fillText(card.title, r.x + 170, r.y + offset + 86);
-
-        ctx.fillStyle = '#FEF9C3';
-        ctx.font = '700 19px "Fredoka", "Trebuchet MS", sans-serif';
-        ctx.fillText(card.subtitle, r.x + 170, r.y + offset + 124);
-
-        ctx.fillStyle = 'rgba(255,255,255,0.26)';
-        fillRoundRect(ctx, r.x + 170, r.y + offset + 154, 152, 44, 20);
-        ctx.fill();
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = '900 21px "Fredoka", "Trebuchet MS", sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('▶ JUGAR', r.x + 246, r.y + offset + 177);
-      }
+      ctx.fillStyle = '#FEF9C3';
+      ctx.font = '700 18px "Fredoka", "Trebuchet MS", sans-serif';
+      ctx.fillText(card.subtitle, r.x + r.w / 2, r.y + offset + 204);
 
       ctx.restore();
     }
@@ -284,7 +266,7 @@ export class GameMenuScreen {
     id: GameId,
     cx: number,
     cy: number,
-    scale = 0.82
+    scale = 0.78
   ): void {
     ctx.save();
     ctx.translate(cx, cy);
@@ -346,8 +328,7 @@ export class GameMenuScreen {
       ctx.arc(-6, 26, 7, 0, Math.PI * 2);
       ctx.fill();
       drawStar(ctx, 36, -34, 14, this.time * 2);
-    } else {
-      // Cute red racing car icon!
+    } else if (id === 'cars') {
       ctx.fillStyle = '#EF4444';
       ctx.strokeStyle = '#0F172A';
       ctx.lineWidth = 4;
@@ -371,6 +352,33 @@ export class GameMenuScreen {
         ctx.fill();
       }
       drawStar(ctx, 38, -36, 14, this.time * 3);
+    } else {
+      // Two overlapping memory cards!
+      ctx.save();
+      ctx.rotate(-0.14);
+      ctx.fillStyle = '#6366F1';
+      ctx.strokeStyle = '#1E1B4B';
+      ctx.lineWidth = 4;
+      fillRoundRect(ctx, -54, -44, 62, 82, 12);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '900 38px "Fredoka", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('?', -23, 0);
+      ctx.restore();
+
+      ctx.save();
+      ctx.rotate(0.14);
+      ctx.fillStyle = '#FEF9C3';
+      ctx.strokeStyle = '#F59E0B';
+      ctx.lineWidth = 4;
+      fillRoundRect(ctx, -4, -42, 62, 82, 12);
+      ctx.fill();
+      ctx.stroke();
+      drawStar(ctx, 27, -2, 22, this.time * 2);
+      ctx.restore();
     }
 
     ctx.restore();

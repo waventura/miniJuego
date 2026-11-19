@@ -63,6 +63,8 @@ export class RaceGame implements MiniGame {
   private boostFlash = 0;
 
   private finishDist: number;
+  private countdown = 2.1; // 3, 2, 1, ¡YA!
+  private lastCountdownStep = 4;
 
   private jumpBtn: Rect = { x: 42, y: 632, w: 320, h: 132 };
   private accelBtn: Rect = { x: GAME_WIDTH - 362, y: 632, w: 320, h: 132 };
@@ -118,6 +120,17 @@ export class RaceGame implements MiniGame {
   public update(dt: number, input: InputSnapshot): VictoryData | null {
     this.time += dt;
     this.boostFlash = Math.max(0, this.boostFlash - dt * 4);
+
+    if (this.countdown > 0) {
+      this.countdown = Math.max(0, this.countdown - dt);
+      const step = Math.ceil(this.countdown / 0.65);
+      if (step < this.lastCountdownStep) {
+        this.lastCountdownStep = step;
+        if (step > 0) sound.playTap();
+        else sound.playBonus();
+      }
+      if (this.countdown > 0.2) return null;
+    }
 
     const player = this.racers[3];
 
@@ -403,6 +416,33 @@ export class RaceGame implements MiniGame {
       pressed: this.boostFlash > 0.3,
       radius: 28,
     });
+
+    // Big 3, 2, 1, ¡YA! countdown banner
+    if (this.countdown > 0) {
+      const label =
+        this.countdown > 1.4
+          ? '3'
+          : this.countdown > 0.75
+          ? '2'
+          : this.countdown > 0.2
+          ? '1'
+          : '¡YA!';
+      ctx.save();
+      ctx.fillStyle = label === '¡YA!' ? '#22C55E' : '#FACC15';
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.arc(GAME_WIDTH / 2, 265, 92, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = label === '¡YA!' ? '#FFFFFF' : '#991B1B';
+      ctx.font = '900 76px "Fredoka", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, GAME_WIDTH / 2, 270);
+      ctx.restore();
+    }
   }
 
   private drawProgressBar(ctx: CanvasRenderingContext2D): void {

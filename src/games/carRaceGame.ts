@@ -65,6 +65,8 @@ export class CarRaceGame implements MiniGame {
   private upHeld = false;
   private downHeld = false;
   private turboHeld = false;
+  private countdown = 2.1;
+  private lastCountdownStep = 4;
 
   private upBtn: Rect = { x: 36, y: 632, w: 196, h: 132 };
   private downBtn: Rect = { x: 254, y: 632, w: 196, h: 132 };
@@ -111,6 +113,17 @@ export class CarRaceGame implements MiniGame {
 
   public update(dt: number, input: InputSnapshot): VictoryData | null {
     this.time += dt;
+
+    if (this.countdown > 0) {
+      this.countdown = Math.max(0, this.countdown - dt);
+      const step = Math.ceil(this.countdown / 0.65);
+      if (step < this.lastCountdownStep) {
+        this.lastCountdownStep = step;
+        if (step > 0) sound.playTap();
+        else sound.playBonus();
+      }
+      if (this.countdown > 0.2) return null;
+    }
 
     if (this.finished) {
       this.finishTimer += dt;
@@ -427,6 +440,33 @@ export class CarRaceGame implements MiniGame {
       pressed: this.turboHeld || this.turboTimer > 0,
       radius: 28,
     });
+
+    // Big 3, 2, 1, ¡YA! countdown banner
+    if (this.countdown > 0) {
+      const label =
+        this.countdown > 1.4
+          ? '3'
+          : this.countdown > 0.75
+          ? '2'
+          : this.countdown > 0.2
+          ? '1'
+          : '¡YA!';
+      ctx.save();
+      ctx.fillStyle = label === '¡YA!' ? '#22C55E' : '#FACC15';
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.arc(GAME_WIDTH / 2, 265, 92, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = label === '¡YA!' ? '#FFFFFF' : '#991B1B';
+      ctx.font = '900 76px "Fredoka", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, GAME_WIDTH / 2, 270);
+      ctx.restore();
+    }
   }
 
   private drawRaceCar(
