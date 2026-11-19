@@ -5,9 +5,16 @@ on:
     branches: [ main, master ]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build-apk:
     runs-on: ubuntu-latest
+
+    env:
+      APP_VERSION_CODE: ${{ github.run_number }}
+      APP_VERSION_NAME: 1.0.${{ github.run_number }}
 
     steps:
       - name: Checkout repository
@@ -50,3 +57,15 @@ jobs:
           name: carlos-y-mateo-app-debug-apk
           path: android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
+
+      - name: Publish GitHub Release for In-App Auto-Update
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="v${APP_VERSION_NAME}"
+          APK_OUT="carlos-mateo-ariel-${TAG}.apk"
+          cp android/app/build/outputs/apk/debug/app-debug.apk "${APK_OUT}"
+          gh release create "${TAG}" "${APK_OUT}" \
+            --title "¡Aventura de Carlos, Mateo y Ariel! ${TAG}" \
+            --notes "Nueva versión ${TAG} lista para descargar e instalar directamente en la tablet Android." \
+            --latest

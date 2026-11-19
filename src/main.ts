@@ -30,6 +30,10 @@ import { CarRaceGame } from './games/carRaceGame';
 import { MemoryGame } from './games/memoryGame';
 import { FlappyGame } from './games/flappyGame';
 import { TicTacToeGame } from './games/ticTacToeGame';
+import { drawTactileButton } from './ui/buttons';
+import { CURRENT_VERSION, updater } from './updater';
+
+updater.checkInBackground();
 
 interface TouchSparkle {
   x: number;
@@ -305,11 +309,39 @@ function loop(now: number): void {
     }
   }
 
+  const updateBtn: Rect = { x: 32, y: GAME_HEIGHT - 102, w: 360, h: 72 };
+  if (
+    screen === 'select' &&
+    updater.availableUpdate &&
+    isRectJustPressed(input, updateBtn)
+  ) {
+    sound.playBonus();
+    updater.openUpdateDownload();
+  }
+
   // Render active screen
   ctx.clearRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
   if (screen === 'select') {
     selectScreen.render(ctx, selectedCharacter, input);
+    if (updater.availableUpdate) {
+      drawTactileButton(ctx, {
+        rect: updateBtn,
+        label: `⬇ ACTUALIZAR v${updater.availableUpdate.version}`,
+        bg: '#0EA5E9',
+        border: '#0369A1',
+        fontSize: 22,
+        pressed: false,
+        radius: 22,
+      });
+    }
+    ctx.save();
+    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+    ctx.font = '800 18px "Fredoka", sans-serif';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'bottom';
+    ctx.fillText(`v${CURRENT_VERSION}`, GAME_WIDTH - 24, GAME_HEIGHT - 16);
+    ctx.restore();
   } else if (screen === 'menu') {
     menuScreen.render(ctx, selectedCharacter, input);
   } else if (screen === 'playing' && activeGame) {
