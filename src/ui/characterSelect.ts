@@ -56,6 +56,11 @@ export class CharacterSelectScreen {
       if (isRectJustPressed(input, this.cardRects[i])) {
         nextSelected = CHARACTERS[i].id;
         sound.playSelect();
+        if (nextSelected === 'carlos') {
+          sound.playVoice('char_carlos');
+        } else if (nextSelected === 'mateo') {
+          sound.playVoice('char_mateo');
+        }
       }
     }
 

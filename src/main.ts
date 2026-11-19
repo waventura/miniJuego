@@ -119,9 +119,11 @@ function launchGame(gameId: GameId): void {
   switch (gameId) {
     case 'race':
       activeGame = new RaceGame(selectedCharacter);
+      sound.playVoice('intro_carrera');
       break;
     case 'playground':
       activeGame = new PlaygroundGame(selectedCharacter);
+      sound.playVoice('intro_patio');
       break;
     case 'classroom':
       activeGame = new ClassroomGame(selectedCharacter);
@@ -138,6 +140,18 @@ function launchGame(gameId: GameId): void {
   }
   screen = 'playing';
 }
+
+function playVictoryVoice(charId: CharacterId): void {
+  if (charId === 'carlos') {
+    sound.playVoice('victoria_carlos');
+  } else if (charId === 'mateo') {
+    sound.playVoice('victoria_mateo');
+  } else {
+    sound.playVoice('victoria_general');
+  }
+}
+
+let playedInitialGreeting = false;
 
 function buildInputSnapshot(): InputSnapshot {
   const pointers: PointerInfo[] = [];
@@ -184,6 +198,7 @@ function loop(now: number): void {
   // Global Back button while playing
   if (screen === 'playing' && isRectJustPressed(input, backBtn)) {
     sound.playTap();
+    sound.playVoice('elige_juego');
     activeGame = null;
     screen = 'menu';
     clearFrameInputs();
@@ -193,15 +208,30 @@ function loop(now: number): void {
 
   // Update active screen
   if (screen === 'select') {
+    const prevChar = selectedCharacter;
     const res = selectScreen.update(dt, input, selectedCharacter);
     selectedCharacter = res.selected;
+    if (
+      !playedInitialGreeting &&
+      input.pointers.some((p) => p.justPressed) &&
+      !res.start &&
+      res.selected === prevChar
+    ) {
+      playedInitialGreeting = true;
+      sound.playVoice('elige_personaje');
+    } else if (res.selected !== prevChar) {
+      playedInitialGreeting = true;
+    }
     if (res.start) {
+      playedInitialGreeting = true;
       screen = 'menu';
+      sound.playVoice('elige_juego');
     }
   } else if (screen === 'menu') {
     const res = menuScreen.update(dt, input);
     if (res.backToSelect) {
       screen = 'select';
+      sound.playVoice('elige_personaje');
     } else if (res.launchGame) {
       launchGame(res.launchGame);
     }
@@ -210,6 +240,7 @@ function loop(now: number): void {
     if (win) {
       victoryData = win;
       victoryScreen.reset();
+      playVictoryVoice(win.characterId);
       screen = 'victory';
     }
   } else if (screen === 'victory' && victoryData) {
@@ -218,6 +249,7 @@ function loop(now: number): void {
       launchGame(currentGameId);
     } else if (action === 'menu') {
       screen = 'menu';
+      sound.playVoice('elige_juego');
     }
   }
 

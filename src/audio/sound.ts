@@ -1,5 +1,18 @@
+export type VoiceId =
+  | 'elige_personaje'
+  | 'char_carlos'
+  | 'char_mateo'
+  | 'elige_juego'
+  | 'intro_carrera'
+  | 'intro_patio'
+  | 'victoria_carlos'
+  | 'victoria_mateo'
+  | 'victoria_general';
+
 class SoundEngine {
   private ctx: AudioContext | null = null;
+  private voiceCache = new Map<VoiceId, HTMLAudioElement>();
+  private currentVoice: HTMLAudioElement | null = null;
   public muted = false;
 
   public unlock(): void {
@@ -19,10 +32,48 @@ class SoundEngine {
 
   public toggleMute(): boolean {
     this.muted = !this.muted;
-    if (!this.muted) {
+    if (this.muted) {
+      this.stopVoice();
+    } else {
       this.playTap();
     }
     return this.muted;
+  }
+
+  public stopVoice(): void {
+    if (this.currentVoice) {
+      try {
+        this.currentVoice.pause();
+        this.currentVoice.currentTime = 0;
+      } catch {
+        // ignore
+      }
+      this.currentVoice = null;
+    }
+  }
+
+  public playVoice(id: VoiceId): void {
+    if (this.muted) return;
+    this.stopVoice();
+
+    let audio = this.voiceCache.get(id);
+    if (!audio) {
+      audio = new Audio(`./audio/${id}.wav`);
+      audio.preload = 'auto';
+      this.voiceCache.set(id, audio);
+    }
+
+    try {
+      audio.currentTime = 0;
+      audio.volume = 1.0;
+      this.currentVoice = audio;
+      const promise = audio.play();
+      if (promise) {
+        promise.catch(() => {});
+      }
+    } catch {
+      // ignore playback restriction errors
+    }
   }
 
   private getCtx(): AudioContext | null {
