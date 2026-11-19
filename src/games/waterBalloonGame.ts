@@ -12,7 +12,7 @@ import { sound } from '../audio/sound';
 
 const MAX_LEVEL = 5;
 
-type AnimalKind = 'duck' | 'frog' | 'turtle' | 'goldenDuck';
+type AnimalKind = 'duck' | 'frog' | 'turtle' | 'waterDino' | 'goldenDuck';
 
 interface WaterAnimal {
   id: number;
@@ -85,17 +85,21 @@ export class WaterBalloonGame implements MiniGame {
     const dir = row === 0 ? 1 : -1;
     const roll = Math.random();
     const kind: AnimalKind =
-      roll < 0.16
+      roll < 0.14
         ? 'goldenDuck'
-        : roll < 0.45
+        : roll < 0.42
+        ? 'waterDino'
+        : roll < 0.64
         ? 'duck'
-        : roll < 0.74
+        : roll < 0.84
         ? 'frog'
         : 'turtle';
 
     const baseSpeed =
       kind === 'goldenDuck'
         ? 210 + this.level * 26
+        : kind === 'waterDino'
+        ? 155 + this.level * 22
         : kind === 'turtle'
         ? 110 + this.level * 18
         : 145 + this.level * 22;
@@ -245,13 +249,22 @@ export class WaterBalloonGame implements MiniGame {
         hitAny = true;
 
         const pts =
-          a.kind === 'goldenDuck' ? 3 : a.kind === 'turtle' ? 2 : 1;
+          a.kind === 'goldenDuck'
+            ? 3
+            : a.kind === 'waterDino' || a.kind === 'turtle'
+            ? 2
+            : 1;
         this.score += pts;
         this.pops.push({
           x: a.x,
           y: a.y - 54,
-          text: pts === 3 ? '💦 ¡+3 DORADO!' : `💦 ¡SPLASH! +${pts}`,
-          color: pts === 3 ? '#EA580C' : '#0284C7',
+          text:
+            pts === 3
+              ? '💦 ¡+3 DORADO!'
+              : a.kind === 'waterDino'
+              ? '🦕 ¡SPLASH DINO! +2'
+              : `💦 ¡SPLASH! +${pts}`,
+          color: pts === 3 ? '#EA580C' : a.kind === 'waterDino' ? '#16A34A' : '#0284C7',
           life: 0.9,
         });
 
@@ -600,6 +613,73 @@ export class WaterBalloonGame implements MiniGame {
       ctx.beginPath();
       ctx.arc(0, -18, 14, 0.1 * Math.PI, 0.9 * Math.PI);
       ctx.stroke();
+    } else if (a.kind === 'waterDino') {
+      // Cute friendly dinosaur swimming in a colorful pool floatie!
+      // Dino body & long friendly neck
+      ctx.fillStyle = '#22C55E';
+      ctx.strokeStyle = '#15803D';
+      ctx.lineWidth = 3.5;
+
+      // Tail behind floatie
+      ctx.beginPath();
+      ctx.moveTo(-26, -12);
+      ctx.quadraticCurveTo(-48, -24, -52, -38);
+      ctx.quadraticCurveTo(-34, -34, -20, -20);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Long dino neck + cute head
+      ctx.beginPath();
+      ctx.moveTo(6, -12);
+      ctx.quadraticCurveTo(10, -44, 18, -56);
+      ctx.lineTo(34, -52);
+      ctx.quadraticCurveTo(26, -34, 24, -12);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Dino snout/head
+      fillRoundRect(ctx, 8, -72, 42, 26, 12);
+      ctx.fill();
+      ctx.stroke();
+
+      // Orange back spikes on neck
+      ctx.fillStyle = '#F97316';
+      ctx.beginPath();
+      ctx.arc(10, -56, 4.5, 0, Math.PI * 2);
+      ctx.arc(8, -42, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Happy dino eye & smile
+      ctx.fillStyle = '#FFFFFF';
+      ctx.beginPath();
+      ctx.arc(28, -61, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0F172A';
+      ctx.beginPath();
+      ctx.arc(30, -61, 3.2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#15803D';
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      ctx.arc(36, -54, 7, 0.1 * Math.PI, 0.85 * Math.PI);
+      ctx.stroke();
+
+      // Bright pink/yellow striped swim floatie ring!
+      ctx.fillStyle = '#EC4899';
+      ctx.strokeStyle = '#9D174D';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.ellipse(0, -4, 40, 14, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#FACC15';
+      ctx.beginPath();
+      ctx.ellipse(-18, -4, 9, 12, 0, 0, Math.PI * 2);
+      ctx.ellipse(18, -4, 9, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
     } else {
       // Friendly swimming turtle!
       ctx.fillStyle = '#16A34A';
