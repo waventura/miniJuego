@@ -28,6 +28,8 @@ import { SoccerGame } from './games/soccerGame';
 import { DinoGame } from './games/dinoGame';
 import { CarRaceGame } from './games/carRaceGame';
 import { MemoryGame } from './games/memoryGame';
+import { FlappyGame } from './games/flappyGame';
+import { TicTacToeGame } from './games/ticTacToeGame';
 
 interface TouchSparkle {
   x: number;
@@ -176,6 +178,12 @@ function launchGame(gameId: GameId, level = 1): void {
       break;
     case 'memory':
       activeGame = new MemoryGame(selectedCharacter, level);
+      break;
+    case 'flappy':
+      activeGame = new FlappyGame(selectedCharacter, level);
+      break;
+    case 'tictactoe':
+      activeGame = new TicTacToeGame(selectedCharacter, level);
       break;
   }
   screen = 'playing';

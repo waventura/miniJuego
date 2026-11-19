@@ -17,7 +17,9 @@ export type GameId =
   | 'soccer'
   | 'dinos'
   | 'cars'
-  | 'memory';
+  | 'memory'
+  | 'flappy'
+  | 'tictactoe';
 
 export type ScreenId = 'select' | 'menu' | 'playing' | 'victory';
 

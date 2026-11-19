@@ -46,14 +46,14 @@ export class GameMenuScreen {
   };
 
   constructor() {
-    // Symmetric 4x2 grid for all 8 mini-games!
-    const cols = 4;
-    const cardW = 304;
+    // Symmetric 5x2 grid for all 10 mini-games!
+    const cols = 5;
+    const cardW = 244;
     const cardH = 242;
-    const gapX = 20;
+    const gapX = 16;
     const gapY = 22;
     const startX = (GAME_WIDTH - (cardW * cols + gapX * (cols - 1))) / 2;
-    const startY = 136;
+    const startY = 134;
 
     const defs: Array<Omit<GameCardInfo, 'rect'>> = [
       {
@@ -87,7 +87,7 @@ export class GameMenuScreen {
       {
         id: 'soccer',
         title: '5. FÚTBOL',
-        subtitle: '3 niveles • ¡GOLAZOS!',
+        subtitle: '3 niveles • ¡GOLES!',
         bg: '#0EA5E9',
         border: '#0369A1',
       },
@@ -111,6 +111,21 @@ export class GameMenuScreen {
         subtitle: '3 niveles • ¡Parejas!',
         bg: '#6366F1',
         border: '#3730A3',
+      },
+      {
+        id: 'flappy',
+        title: '9. VOLAR',
+        subtitle: '3 niveles • ¡Flappy!',
+        bg: '#14B8A6',
+        border: '#0F766E',
+        isNew: true,
+      },
+      {
+        id: 'tictactoe',
+        title: '10. X y O',
+        subtitle: '1P o 2P • ¡3 en raya!',
+        bg: '#2563EB',
+        border: '#1E3A8A',
         isNew: true,
       },
     ];
@@ -190,7 +205,7 @@ export class GameMenuScreen {
     );
     ctx.restore();
 
-    // 8 Game Cards (4x2)
+    // 10 Game Cards (5x2)
     for (const card of this.cards) {
       const pressed = isRectHeld(input, card.rect);
       const offset = pressed ? 6 : 0;
@@ -198,42 +213,42 @@ export class GameMenuScreen {
 
       ctx.save();
       ctx.fillStyle = card.border;
-      fillRoundRect(ctx, r.x, r.y + 9, r.w, r.h, 26);
+      fillRoundRect(ctx, r.x, r.y + 9, r.w, r.h, 24);
       ctx.fill();
 
       ctx.fillStyle = card.bg;
       ctx.strokeStyle = '#FFFFFF';
       ctx.lineWidth = 5;
-      fillRoundRect(ctx, r.x, r.y + offset, r.w, r.h, 26);
+      fillRoundRect(ctx, r.x, r.y + offset, r.w, r.h, 24);
       ctx.fill();
       ctx.stroke();
 
       // Top white icon box
       ctx.fillStyle = 'rgba(255,255,255,0.93)';
-      fillRoundRect(ctx, r.x + 18, r.y + offset + 16, r.w - 36, 126, 20);
+      fillRoundRect(ctx, r.x + 14, r.y + offset + 14, r.w - 28, 128, 18);
       ctx.fill();
 
-      this.drawMiniIcon(ctx, card.id, r.x + r.w / 2, r.y + offset + 79, 0.78);
+      this.drawMiniIcon(ctx, card.id, r.x + r.w / 2, r.y + offset + 78, 0.72);
 
       if (card.isNew) {
         ctx.fillStyle = '#FACC15';
-        fillRoundRect(ctx, r.x + r.w - 114, r.y + offset + 8, 102, 28, 14);
+        fillRoundRect(ctx, r.x + r.w - 96, r.y + offset + 6, 88, 26, 12);
         ctx.fill();
         ctx.fillStyle = '#991B1B';
-        ctx.font = '900 15px "Fredoka", sans-serif';
+        ctx.font = '900 13px "Fredoka", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('★ ¡NUEVO!', r.x + r.w - 63, r.y + offset + 23);
+        ctx.fillText('★ ¡NUEVO!', r.x + r.w - 52, r.y + offset + 20);
       }
 
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.font = '900 24px "Fredoka", "Trebuchet MS", sans-serif';
+      ctx.font = '900 22px "Fredoka", "Trebuchet MS", sans-serif';
       ctx.fillText(card.title, r.x + r.w / 2, r.y + offset + 170);
 
       ctx.fillStyle = '#FEF9C3';
-      ctx.font = '700 18px "Fredoka", "Trebuchet MS", sans-serif';
+      ctx.font = '700 16px "Fredoka", "Trebuchet MS", sans-serif';
       ctx.fillText(card.subtitle, r.x + r.w / 2, r.y + offset + 204);
 
       ctx.restore();
@@ -266,7 +281,7 @@ export class GameMenuScreen {
     id: GameId,
     cx: number,
     cy: number,
-    scale = 0.78
+    scale = 0.72
   ): void {
     ctx.save();
     ctx.translate(cx, cy);
@@ -352,8 +367,7 @@ export class GameMenuScreen {
         ctx.fill();
       }
       drawStar(ctx, 38, -36, 14, this.time * 3);
-    } else {
-      // Two overlapping memory cards!
+    } else if (id === 'memory') {
       ctx.save();
       ctx.rotate(-0.14);
       ctx.fillStyle = '#6366F1';
@@ -379,6 +393,81 @@ export class GameMenuScreen {
       ctx.stroke();
       drawStar(ctx, 27, -2, 22, this.time * 2);
       ctx.restore();
+    } else if (id === 'flappy') {
+      // Green pipe + cute flying bird/star with wing!
+      ctx.fillStyle = '#22C55E';
+      ctx.strokeStyle = '#15803D';
+      ctx.lineWidth = 4;
+      ctx.fillRect(24, -64, 30, 44);
+      ctx.strokeRect(24, -64, 30, 44);
+      ctx.fillRect(24, 24, 30, 40);
+      ctx.strokeRect(24, 24, 30, 40);
+
+      const flap = Math.sin(this.time * 12) * 8;
+      ctx.fillStyle = '#FACC15';
+      ctx.strokeStyle = '#B45309';
+      ctx.beginPath();
+      ctx.arc(-20, flap * 0.4, 26, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      // Wing
+      ctx.fillStyle = '#FEF9C3';
+      ctx.beginPath();
+      ctx.ellipse(-34, 4 + flap * 0.5, 16, 9, -0.3, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      // Eye & beak
+      ctx.fillStyle = '#0F172A';
+      ctx.beginPath();
+      ctx.arc(-10, -6 + flap * 0.4, 5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#F97316';
+      ctx.beginPath();
+      ctx.moveTo(4, -2 + flap * 0.4);
+      ctx.lineTo(18, 3 + flap * 0.4);
+      ctx.lineTo(4, 10 + flap * 0.4);
+      ctx.closePath();
+      ctx.fill();
+    } else {
+      // Tic-Tac-Toe 3x3 mini board with X and O
+      ctx.strokeStyle = '#94A3B8';
+      ctx.lineWidth = 6;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-18, -50);
+      ctx.lineTo(-18, 50);
+      ctx.moveTo(18, -50);
+      ctx.lineTo(18, 50);
+      ctx.moveTo(-50, -18);
+      ctx.lineTo(50, -18);
+      ctx.moveTo(-50, 18);
+      ctx.lineTo(50, 18);
+      ctx.stroke();
+
+      // Blue X
+      ctx.strokeStyle = '#2563EB';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(-46, -46);
+      ctx.lineTo(-26, -26);
+      ctx.moveTo(-26, -46);
+      ctx.lineTo(-46, -26);
+      ctx.stroke();
+
+      // Red O
+      ctx.strokeStyle = '#EF4444';
+      ctx.beginPath();
+      ctx.arc(0, 0, 11, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Blue X bottom right
+      ctx.strokeStyle = '#2563EB';
+      ctx.beginPath();
+      ctx.moveTo(26, 26);
+      ctx.lineTo(46, 46);
+      ctx.moveTo(46, 26);
+      ctx.lineTo(26, 46);
+      ctx.stroke();
     }
 
     ctx.restore();
