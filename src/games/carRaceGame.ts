@@ -83,7 +83,7 @@ export class CarRaceGame implements MiniGame {
         id: others[i]?.id ?? 'pilot',
         lane: i === 0 ? 0 : 2,
         dist: 120 + i * 160,
-        speed: 255 + level * 15 + i * 14,
+        speed: 325 + (level - 1) * 38 + i * 20,
         color: carColors[i % carColors.length],
       });
     }

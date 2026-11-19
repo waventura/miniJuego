@@ -87,7 +87,7 @@ export class RaceGame implements MiniGame {
         yOffset: 0,
         vy: 0,
         stumbleTimer: 0,
-        cpuBaseSpeed: 190 + (level - 1) * 18 + i * 16,
+        cpuBaseSpeed: 285 + (level - 1) * 32 + i * 18,
         cpuPhase: i * 1.9,
       });
     });
@@ -170,7 +170,7 @@ export class RaceGame implements MiniGame {
       input.keysJustPressed.has('KeyW');
 
     if (accelPressed) {
-      player.speed = Math.min(430, player.speed + 72);
+      player.speed = Math.min(460, player.speed + 68);
       this.boostFlash = 1;
       sound.playBoost();
       for (let i = 0; i < 6; i++) {
@@ -190,10 +190,10 @@ export class RaceGame implements MiniGame {
       sound.playJump();
     }
 
-    // Player physics (gentle minimum speed so young kids never stall)
-    const minSpeed = 165;
+    // Player physics
+    const minSpeed = 140;
     if (player.speed > minSpeed) {
-      player.speed = Math.max(minSpeed, player.speed - 95 * dt);
+      player.speed = Math.max(minSpeed, player.speed - 135 * dt);
     }
     if (player.stumbleTimer > 0) {
       player.stumbleTimer = Math.max(0, player.stumbleTimer - dt);
@@ -212,7 +212,7 @@ export class RaceGame implements MiniGame {
       if (obs.hit) continue;
       if (Math.abs(obs.dist - player.dist) < 42 && player.yOffset > -42) {
         obs.hit = true;
-        player.speed = 145;
+        player.speed = 135;
         player.stumbleTimer = 0.55;
         if (obs.kind === 'puddle') {
           sound.playSplash();
@@ -232,14 +232,13 @@ export class RaceGame implements MiniGame {
       }
     }
 
-    // CPU racers with kid-friendly pacing (fun, close race, very winnable!)
+    // Competitive CPU racers!
     for (const r of this.racers) {
       if (r.isPlayer) continue;
-      const wave = Math.sin(this.time * 1.8 + r.cpuPhase) * 28;
-      // Gentle rubber banding so CPUs stay visible & exciting
+      const wave = Math.sin(this.time * 2.1 + r.cpuPhase) * 32;
       const gap = player.dist - r.dist;
-      const assist = Math.max(-35, Math.min(35, gap * 0.08));
-      r.speed = Math.max(150, Math.min(280, r.cpuBaseSpeed + wave + assist));
+      const assist = Math.max(-25, Math.min(45, gap * 0.08));
+      r.speed = Math.max(240, Math.min(410, r.cpuBaseSpeed + wave + assist));
       r.dist += r.speed * dt;
     }
 

@@ -98,20 +98,20 @@ export class SoccerGame implements MiniGame {
       return null;
     }
 
-    // Friendly goalkeeper patrolling back and forth
-    const keeperSpeed = 165 + this.level * 20;
+    // Energetic goalkeeper patrolling quickly back and forth!
+    const keeperSpeed = 330 + (this.level - 1) * 75;
     this.keeperX += this.keeperDir * keeperSpeed * dt;
-    if (this.keeperX > GOAL_RIGHT - 90) {
-      this.keeperX = GOAL_RIGHT - 90;
+    if (this.keeperX > GOAL_RIGHT - 82) {
+      this.keeperX = GOAL_RIGHT - 82;
       this.keeperDir = -1;
-    } else if (this.keeperX < GOAL_LEFT + 90) {
-      this.keeperX = GOAL_LEFT + 90;
+    } else if (this.keeperX < GOAL_LEFT + 82) {
+      this.keeperX = GOAL_LEFT + 82;
       this.keeperDir = 1;
     }
 
-    // Sweep visible aiming target smoothly across the goal when ready to shoot
+    // Sweep visible aiming target briskly across the goal
     if (!this.kicking) {
-      const aimSpeed = 310 + (this.level - 1) * 35;
+      const aimSpeed = 380 + (this.level - 1) * 55;
       this.aimX += this.aimDir * aimSpeed * dt;
       if (this.aimX > GOAL_RIGHT - 64) {
         this.aimX = GOAL_RIGHT - 64;
@@ -120,7 +120,7 @@ export class SoccerGame implements MiniGame {
         this.aimX = GOAL_LEFT + 64;
         this.aimDir = 1;
       }
-      this.aimY = 268 + Math.sin(this.time * 2.5) * 32;
+      this.aimY = 268 + Math.sin(this.time * 3.0) * 36;
     }
 
     // Input: tap anywhere in the goal to aim & kick there, OR press ¡PATEAR! to kick at the aiming reticle!
@@ -156,7 +156,7 @@ export class SoccerGame implements MiniGame {
     }
 
     if (this.kicking) {
-      this.kickProgress += dt * 2.3;
+      this.kickProgress += dt * 2.25;
       const t = Math.min(1, this.kickProgress);
       const startX = GAME_WIDTH / 2;
       const startY = 635;
@@ -167,7 +167,7 @@ export class SoccerGame implements MiniGame {
       this.ballRot += dt * 15;
 
       if (t >= 1) {
-        const saved = Math.abs(this.targetX - this.keeperX) < 58;
+        const saved = Math.abs(this.targetX - this.keeperX) < 78;
         if (saved) {
           this.bannerText = '¡CASI! ¡INTENTA OTRA VEZ!';
           this.bannerTimer = 0.9;
