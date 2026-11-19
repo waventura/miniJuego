@@ -26,126 +26,144 @@ import {
 import { drawTactileButton, isRectHeld, isRectJustPressed } from './buttons';
 import { sound } from '../audio/sound';
 
-interface GameCardInfo {
+interface GameCardDef {
   id: GameId;
   title: string;
   subtitle: string;
   bg: string;
   border: string;
-  rect: Rect;
   isNew?: boolean;
 }
 
+const ALL_GAMES: GameCardDef[] = [
+  {
+    id: 'race',
+    title: '1. CARRERAS',
+    subtitle: '3 niveles • ¡Corre!',
+    bg: '#EF4444',
+    border: '#B91C1C',
+  },
+  {
+    id: 'playground',
+    title: '2. RECREO',
+    subtitle: '3 niveles • ¡Salta!',
+    bg: '#22C55E',
+    border: '#15803D',
+  },
+  {
+    id: 'classroom',
+    title: '3. SALÓN',
+    subtitle: '3 niveles • ¡Atrapa!',
+    bg: '#F59E0B',
+    border: '#B45309',
+  },
+  {
+    id: 'mountain',
+    title: '4. MONTAÑA',
+    subtitle: '3 niveles • ¡Sube!',
+    bg: '#8B5CF6',
+    border: '#5B21B6',
+  },
+  {
+    id: 'soccer',
+    title: '5. FÚTBOL',
+    subtitle: '10 niveles • ¡COPA!',
+    bg: '#0EA5E9',
+    border: '#0369A1',
+  },
+  {
+    id: 'dinos',
+    title: '6. DINOS',
+    subtitle: '3 niveles • ¡Huevos!',
+    bg: '#EC4899',
+    border: '#9D174D',
+  },
+  {
+    id: 'cars',
+    title: '7. CARRITOS',
+    subtitle: '3 niveles • ¡TURBO!',
+    bg: '#F97316',
+    border: '#C2410C',
+  },
+  {
+    id: 'memory',
+    title: '8. MEMORIA',
+    subtitle: '3 niveles • ¡Parejas!',
+    bg: '#6366F1',
+    border: '#3730A3',
+  },
+  {
+    id: 'flappy',
+    title: '9. VOLAR',
+    subtitle: '3 niveles • ¡Flappy!',
+    bg: '#14B8A6',
+    border: '#0F766E',
+  },
+  {
+    id: 'tictactoe',
+    title: '10. X y O',
+    subtitle: '1P o 2P • ¡3 en raya!',
+    bg: '#2563EB',
+    border: '#1E3A8A',
+  },
+  {
+    id: 'waterballoons',
+    title: '11. GLOBOS',
+    subtitle: '5 niveles • ¡SPLASH!',
+    bg: '#06B6D4',
+    border: '#0E7490',
+  },
+  {
+    id: 'alphabet',
+    title: '12. ABC',
+    subtitle: '5 niveles • Vocales!',
+    bg: '#D946EF',
+    border: '#86198F',
+  },
+  {
+    id: 'farm',
+    title: '13. GRANJA',
+    subtitle: '3 niveles • ¡Animales!',
+    bg: '#84CC16',
+    border: '#4D7C0F',
+    isNew: true,
+  },
+];
+
+const PER_PAGE = 8;
+
 export class GameMenuScreen {
   private time = 0;
-  private cards: GameCardInfo[];
+  private page = 0;
+  private totalPages = Math.ceil(ALL_GAMES.length / PER_PAGE);
+
   private changeCharBtn: Rect = {
     x: 44,
     y: GAME_HEIGHT - 96,
-    w: 350,
+    w: 320,
+    h: 72,
+  };
+  private pageBtn: Rect = {
+    x: GAME_WIDTH / 2 - 190,
+    y: GAME_HEIGHT - 96,
+    w: 380,
     h: 72,
   };
 
-  constructor() {
-    // 11 Mini-Games: Top row 6 cards, Bottom row 5 cards
-    const defs: Array<Omit<GameCardInfo, 'rect'>> = [
-      {
-        id: 'race',
-        title: '1. CARRERAS',
-        subtitle: '3 niveles • ¡Corre!',
-        bg: '#EF4444',
-        border: '#B91C1C',
-      },
-      {
-        id: 'playground',
-        title: '2. RECREO',
-        subtitle: '3 niveles • ¡Salta!',
-        bg: '#22C55E',
-        border: '#15803D',
-      },
-      {
-        id: 'classroom',
-        title: '3. SALÓN',
-        subtitle: '3 niveles • ¡Atrapa!',
-        bg: '#F59E0B',
-        border: '#B45309',
-      },
-      {
-        id: 'mountain',
-        title: '4. MONTAÑA',
-        subtitle: '3 niveles • ¡Sube!',
-        bg: '#8B5CF6',
-        border: '#5B21B6',
-      },
-      {
-        id: 'soccer',
-        title: '5. FÚTBOL',
-        subtitle: '10 niveles • ¡COPA!',
-        bg: '#0EA5E9',
-        border: '#0369A1',
-      },
-      {
-        id: 'dinos',
-        title: '6. DINOS',
-        subtitle: '3 niveles • ¡Huevos!',
-        bg: '#EC4899',
-        border: '#9D174D',
-      },
-      {
-        id: 'cars',
-        title: '7. CARRITOS',
-        subtitle: '3 niveles • ¡TURBO!',
-        bg: '#F97316',
-        border: '#C2410C',
-      },
-      {
-        id: 'memory',
-        title: '8. MEMORIA',
-        subtitle: '3 niveles • ¡Parejas!',
-        bg: '#6366F1',
-        border: '#3730A3',
-      },
-      {
-        id: 'flappy',
-        title: '9. VOLAR',
-        subtitle: '3 niveles • ¡Flappy!',
-        bg: '#14B8A6',
-        border: '#0F766E',
-      },
-      {
-        id: 'tictactoe',
-        title: '10. X y O',
-        subtitle: '1P o 2P • ¡3 en raya!',
-        bg: '#2563EB',
-        border: '#1E3A8A',
-      },
-      {
-        id: 'waterballoons',
-        title: '11. GLOBOS',
-        subtitle: '5 niveles • ¡SPLASH!',
-        bg: '#06B6D4',
-        border: '#0E7490',
-      },
-      {
-        id: 'alphabet',
-        title: '12. ABC',
-        subtitle: '5 niveles • Vocales!',
-        bg: '#D946EF',
-        border: '#86198F',
-        isNew: true,
-      },
-    ];
-
-    // Symmetric 6x2 grid for all 12 mini-games!
-    const cols = 6;
-    const cardW = 204;
+  private getCurrentPageCards(): Array<GameCardDef & { rect: Rect }> {
+    const slice = ALL_GAMES.slice(
+      this.page * PER_PAGE,
+      (this.page + 1) * PER_PAGE
+    );
+    const cols = 4;
+    const cardW = 304;
     const cardH = 242;
-    const gapX = 14;
+    const gapX = 20;
     const gapY = 22;
     const startX = (GAME_WIDTH - (cardW * cols + gapX * (cols - 1))) / 2;
-    const startY = 132;
+    const startY = 134;
 
-    this.cards = defs.map((d, i) => {
+    return slice.map((d, i) => {
       const col = i % cols;
       const row = Math.floor(i / cols);
       return {
@@ -171,7 +189,14 @@ export class GameMenuScreen {
       return { launchGame: null, backToSelect: true };
     }
 
-    for (const card of this.cards) {
+    if (isRectJustPressed(input, this.pageBtn)) {
+      this.page = (this.page + 1) % this.totalPages;
+      sound.playSelect();
+      return { launchGame: null, backToSelect: false };
+    }
+
+    const cards = this.getCurrentPageCards();
+    for (const card of cards) {
       if (isRectJustPressed(input, card.rect)) {
         sound.playBonus();
         return { launchGame: card.id, backToSelect: false };
@@ -210,80 +235,85 @@ export class GameMenuScreen {
     ctx.stroke();
 
     ctx.fillStyle = '#1E3A8A';
-    ctx.font = '900 37px "Fredoka", "Trebuchet MS", sans-serif';
+    ctx.font = '900 36px "Fredoka", "Trebuchet MS", sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(
-      `¡HOLA ${charMeta.name.toUpperCase()}! ELIGE UN JUEGO`,
+      `¡HOLA ${charMeta.name.toUpperCase()}!  JUEGOS (${this.page + 1}/${this.totalPages})`,
       GAME_WIDTH / 2,
       62
     );
     ctx.restore();
 
-    // 11 Game Cards
-    for (const card of this.cards) {
+    // Big 4x2 cards on current page
+    const cards = this.getCurrentPageCards();
+    for (const card of cards) {
       const pressed = isRectHeld(input, card.rect);
       const offset = pressed ? 6 : 0;
       const r = card.rect;
-      const isNarrow = r.w < 220;
 
       ctx.save();
       ctx.fillStyle = card.border;
-      fillRoundRect(ctx, r.x, r.y + 9, r.w, r.h, 24);
+      fillRoundRect(ctx, r.x, r.y + 9, r.w, r.h, 26);
       ctx.fill();
 
       ctx.fillStyle = card.bg;
       ctx.strokeStyle = '#FFFFFF';
       ctx.lineWidth = 5;
-      fillRoundRect(ctx, r.x, r.y + offset, r.w, r.h, 24);
+      fillRoundRect(ctx, r.x, r.y + offset, r.w, r.h, 26);
       ctx.fill();
       ctx.stroke();
 
       // Top white icon box
       ctx.fillStyle = 'rgba(255,255,255,0.93)';
-      fillRoundRect(ctx, r.x + 12, r.y + offset + 14, r.w - 24, 128, 18);
+      fillRoundRect(ctx, r.x + 18, r.y + offset + 14, r.w - 36, 128, 20);
       ctx.fill();
 
-      this.drawMiniIcon(
-        ctx,
-        card.id,
-        r.x + r.w / 2,
-        r.y + offset + 78,
-        isNarrow ? 0.64 : 0.72
-      );
+      this.drawMiniIcon(ctx, card.id, r.x + r.w / 2, r.y + offset + 78, 0.78);
 
       if (card.isNew) {
         ctx.fillStyle = '#FACC15';
-        fillRoundRect(ctx, r.x + r.w - 96, r.y + offset + 6, 88, 26, 12);
+        fillRoundRect(ctx, r.x + r.w - 108, r.y + offset + 8, 98, 28, 12);
         ctx.fill();
         ctx.fillStyle = '#991B1B';
-        ctx.font = '900 13px "Fredoka", sans-serif';
+        ctx.font = '900 14px "Fredoka", sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText('★ ¡NUEVO!', r.x + r.w - 52, r.y + offset + 20);
+        ctx.fillText('★ ¡NUEVO!', r.x + r.w - 59, r.y + offset + 23);
       }
 
       ctx.fillStyle = '#FFFFFF';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.font = `900 ${isNarrow ? 19 : 22}px "Fredoka", "Trebuchet MS", sans-serif`;
+      ctx.font = '900 24px "Fredoka", "Trebuchet MS", sans-serif';
       ctx.fillText(card.title, r.x + r.w / 2, r.y + offset + 170);
 
       ctx.fillStyle = '#FEF9C3';
-      ctx.font = `700 ${isNarrow ? 14 : 16}px "Fredoka", "Trebuchet MS", sans-serif`;
+      ctx.font = '700 18px "Fredoka", "Trebuchet MS", sans-serif';
       ctx.fillText(card.subtitle, r.x + r.w / 2, r.y + offset + 204);
 
       ctx.restore();
     }
 
-    // Bottom character button
+    // Bottom buttons: Change Character + Next/Prev Page of Games!
     drawTactileButton(ctx, {
       rect: this.changeCharBtn,
       label: 'CAMBIAR PERSONAJE',
       bg: '#2563EB',
       border: '#1E3A8A',
-      fontSize: 24,
+      fontSize: 22,
       pressed: isRectHeld(input, this.changeCharBtn),
+      radius: 22,
+    });
+
+    drawTactileButton(ctx, {
+      rect: this.pageBtn,
+      label:
+        this.page === 0 ? '★ MÁS JUEGOS (9–13) ▶' : '◀ VER JUEGOS (1–8)',
+      bg: '#F59E0B',
+      border: '#B45309',
+      fontSize: 26,
+      pressed: isRectHeld(input, this.pageBtn),
       radius: 22,
     });
 
@@ -303,7 +333,7 @@ export class GameMenuScreen {
     id: GameId,
     cx: number,
     cy: number,
-    scale = 0.72
+    scale = 0.78
   ): void {
     ctx.save();
     ctx.translate(cx, cy);
@@ -484,12 +514,10 @@ export class GameMenuScreen {
       ctx.lineTo(26, 46);
       ctx.stroke();
     } else if (id === 'waterballoons') {
-      // Cute yellow duck + colorful water balloon!
       ctx.fillStyle = '#38BDF8';
       fillRoundRect(ctx, -64, 24, 128, 32, 10);
       ctx.fill();
 
-      // Duck
       ctx.fillStyle = '#FACC15';
       ctx.strokeStyle = '#92400E';
       ctx.lineWidth = 4;
@@ -510,7 +538,6 @@ export class GameMenuScreen {
       ctx.arc(35, -18, 3.8, 0, Math.PI * 2);
       ctx.fill();
 
-      // Flying red water balloon!
       const bob = Math.sin(this.time * 6) * 5;
       ctx.fillStyle = '#EF4444';
       ctx.strokeStyle = '#991B1B';
@@ -518,8 +545,7 @@ export class GameMenuScreen {
       ctx.ellipse(-34, -22 + bob, 18, 22, 0.25, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
-    } else {
-      // Colorful falling A, B, C letter bubbles!
+    } else if (id === 'alphabet') {
       const bubbles = [
         { x: -32, y: -12, letter: 'A', bg: '#EF4444', border: '#991B1B' },
         { x: 30, y: -22, letter: 'E', bg: '#3B82F6', border: '#1E3A8A' },
@@ -541,6 +567,38 @@ export class GameMenuScreen {
         ctx.textBaseline = 'middle';
         ctx.fillText(b.letter, b.x, b.y + bob + 2);
       }
+    } else {
+      // Red Barn + cute little cow face!
+      ctx.fillStyle = '#DC2626';
+      ctx.strokeStyle = '#7F1D1D';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      ctx.moveTo(-54, 48);
+      ctx.lineTo(-54, -12);
+      ctx.lineTo(0, -52);
+      ctx.lineTo(54, -12);
+      ctx.lineTo(54, 48);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Cute white cow peeking out
+      ctx.fillStyle = '#FFFFFF';
+      ctx.strokeStyle = '#1E293B';
+      ctx.beginPath();
+      ctx.arc(0, 12, 24, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#F9A8D4';
+      ctx.beginPath();
+      ctx.ellipse(0, 24, 18, 11, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#0F172A';
+      ctx.beginPath();
+      ctx.arc(-9, 6, 3.5, 0, Math.PI * 2);
+      ctx.arc(9, 6, 3.5, 0, Math.PI * 2);
+      ctx.fill();
     }
 
     ctx.restore();

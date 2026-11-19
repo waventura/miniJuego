@@ -22,7 +22,8 @@ export type GameId =
   | 'flappy'
   | 'tictactoe'
   | 'waterballoons'
-  | 'alphabet';
+  | 'alphabet'
+  | 'farm';
 
 export type ScreenId = 'select' | 'menu' | 'playing' | 'victory';
 

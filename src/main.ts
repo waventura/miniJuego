@@ -32,6 +32,7 @@ import { FlappyGame } from './games/flappyGame';
 import { TicTacToeGame } from './games/ticTacToeGame';
 import { WaterBalloonGame } from './games/waterBalloonGame';
 import { AlphabetGame } from './games/alphabetGame';
+import { FarmGame } from './games/farmGame';
 import { drawTactileButton } from './ui/buttons';
 import { CURRENT_VERSION, updater } from './updater';
 
@@ -196,6 +197,9 @@ function launchGame(gameId: GameId, level = 1): void {
       break;
     case 'alphabet':
       activeGame = new AlphabetGame(selectedCharacter, level);
+      break;
+    case 'farm':
+      activeGame = new FarmGame(selectedCharacter, level);
       break;
   }
   screen = 'playing';
