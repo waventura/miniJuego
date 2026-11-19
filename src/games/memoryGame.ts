@@ -24,6 +24,7 @@ import { sound } from '../audio/sound';
 type CardSymbol =
   | 'carlos'
   | 'mateo'
+  | 'ariel'
   | 'dino'
   | 'hero'
   | 'astro'
@@ -58,6 +59,7 @@ interface MatchSpark {
 const SYMBOL_POOL: Array<{ symbol: CardSymbol; label: string; bg: string }> = [
   { symbol: 'carlos', label: 'Carlos', bg: '#DBEAFE' },
   { symbol: 'mateo', label: 'Mateo', bg: '#FFEDD5' },
+  { symbol: 'ariel', label: 'Ariel', bg: '#D1FAE5' },
   { symbol: 'dino', label: 'Dino', bg: '#DCFCE7' },
   { symbol: 'hero', label: 'Súper', bg: '#E0E7FF' },
   { symbol: 'astro', label: 'Astro', bg: '#EDE9FE' },
@@ -361,6 +363,7 @@ export class MemoryGame implements MiniGame {
     const isChar =
       symbol === 'carlos' ||
       symbol === 'mateo' ||
+      symbol === 'ariel' ||
       symbol === 'dino' ||
       symbol === 'hero' ||
       symbol === 'astro' ||

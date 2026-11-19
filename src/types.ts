@@ -4,6 +4,7 @@ export const GAME_HEIGHT = 800;
 export type CharacterId =
   | 'carlos'
   | 'mateo'
+  | 'ariel'
   | 'pilot'
   | 'hero'
   | 'astro'
@@ -47,6 +48,13 @@ export const CHARACTERS: CharacterMeta[] = [
     subtitle: '¡El Aventurero!',
     accentColor: '#EA580C',
     cardBg: '#FFEDD5',
+  },
+  {
+    id: 'ariel',
+    name: 'Ariel',
+    subtitle: '¡El Valiente!',
+    accentColor: '#047857',
+    cardBg: '#D1FAE5',
   },
   {
     id: 'pilot',

@@ -397,6 +397,16 @@ export function drawCharacter(
       ctx.fillStyle = '#FACC15';
       ctx.fillRect(-13, -63, 5, 36);
       ctx.fillRect(8, -63, 5, 36);
+    } else if (id === 'ariel') {
+      // Brave emerald jacket with golden lightning/star emblem & yellow bandana!
+      ctx.fillStyle = '#FACC15';
+      ctx.beginPath();
+      ctx.moveTo(-14, -63);
+      ctx.lineTo(14, -63);
+      ctx.lineTo(0, -50);
+      ctx.closePath();
+      ctx.fill();
+      drawMiniStar(ctx, 0, -40, 8, '#FACC15');
     } else if (id === 'pilot') {
       // Racing stripes + checkered belt
       ctx.fillStyle = '#FFFFFF';
@@ -464,6 +474,23 @@ export function drawCharacter(
     ctx.beginPath();
     ctx.arc(-5, -24, 6, 0, Math.PI * 2);
     ctx.arc(5, -25, 5.5, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (id === 'ariel') {
+    drawHumanFace(ctx, '#EDBA93', '#F49D91', anim, 4.3, false, time);
+    // Ariel's energetic brave hair + cool yellow headband
+    ctx.fillStyle = '#1E1B18';
+    ctx.beginPath();
+    ctx.arc(0, -5, 26.5, Math.PI * 1.05, Math.PI * 1.95);
+    ctx.lineTo(22, -16);
+    ctx.lineTo(10, -26);
+    ctx.lineTo(0, -20);
+    ctx.lineTo(-10, -27);
+    ctx.lineTo(-22, -15);
+    ctx.closePath();
+    ctx.fill();
+    // Brave gold headband
+    ctx.fillStyle = '#FACC15';
+    roundRectPath(ctx, -24, -17, 48, 6, 3);
     ctx.fill();
   } else if (id === 'pilot') {
     // Racing helmet
@@ -741,6 +768,15 @@ function getPalette(id: CharacterId) {
         shoe: '#EF4444',
         hand: '#F3C29F',
         outline: '#0E7490',
+      };
+    case 'ariel':
+      return {
+        torso: '#10B981',
+        sleeve: '#059669',
+        pants: '#1E3A8A',
+        shoe: '#F97316',
+        hand: '#EDBA93',
+        outline: '#065F46',
       };
     case 'pilot':
       return {

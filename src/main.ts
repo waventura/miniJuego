@@ -194,6 +194,8 @@ function playVictoryVoice(charId: CharacterId): void {
     sound.playVoice('victoria_carlos');
   } else if (charId === 'mateo') {
     sound.playVoice('victoria_mateo');
+  } else if (charId === 'ariel') {
+    sound.playVoice('victoria_ariel');
   } else {
     sound.playVoice('victoria_general');
   }

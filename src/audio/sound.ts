@@ -2,11 +2,13 @@ export type VoiceId =
   | 'elige_personaje'
   | 'char_carlos'
   | 'char_mateo'
+  | 'char_ariel'
   | 'elige_juego'
   | 'intro_carrera'
   | 'intro_patio'
   | 'victoria_carlos'
   | 'victoria_mateo'
+  | 'victoria_ariel'
   | 'victoria_general';
 
 class SoundEngine {
