@@ -52,6 +52,18 @@ class SoundEngine {
       }
       this.currentVoice = null;
     }
+    const androidTts = (
+      window as unknown as {
+        AndroidTTS?: { speak: (t: string) => void; stop: () => void };
+      }
+    ).AndroidTTS;
+    if (androidTts) {
+      try {
+        androidTts.stop();
+      } catch {
+        // ignore
+      }
+    }
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       try {
         window.speechSynthesis.cancel();
@@ -63,6 +75,19 @@ class SoundEngine {
 
   public speak(text: string): void {
     if (this.muted) return;
+    const androidTts = (
+      window as unknown as {
+        AndroidTTS?: { speak: (t: string) => void; stop: () => void };
+      }
+    ).AndroidTTS;
+    if (androidTts) {
+      try {
+        androidTts.speak(text);
+        return;
+      } catch {
+        // fallback below
+      }
+    }
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     try {
       window.speechSynthesis.cancel();
@@ -73,6 +98,71 @@ class SoundEngine {
       window.speechSynthesis.speak(utter);
     } catch {
       // ignore on unsupported WebViews
+    }
+  }
+
+  public playAnimalSound(animalId: string): void {
+    switch (animalId) {
+      case 'cow':
+        // Deep friendly moo
+        this.tone(175, 130, 0.45, 'sawtooth', 0.14, 0);
+        this.tone(130, 115, 0.25, 'triangle', 0.14, 0.35);
+        break;
+      case 'pig':
+        // Double oink-oink snort
+        this.tone(240, 180, 0.11, 'sawtooth', 0.14, 0);
+        this.tone(260, 175, 0.13, 'sawtooth', 0.14, 0.16);
+        break;
+      case 'sheep':
+      case 'goat':
+        // Vibrato bleat
+        this.tone(360, 320, 0.14, 'triangle', 0.16, 0);
+        this.tone(340, 300, 0.14, 'triangle', 0.16, 0.13);
+        this.tone(330, 290, 0.16, 'triangle', 0.15, 0.26);
+        break;
+      case 'chick':
+        // Cute high pío-pío chirp
+        this.tone(1100, 1650, 0.09, 'sine', 0.16, 0);
+        this.tone(1150, 1720, 0.1, 'sine', 0.16, 0.13);
+        break;
+      case 'horse':
+        // Neigh whinny
+        this.tone(620, 420, 0.16, 'sawtooth', 0.12, 0);
+        this.tone(540, 320, 0.24, 'triangle', 0.14, 0.14);
+        break;
+      case 'duck':
+        // Quack-quack
+        this.tone(420, 260, 0.11, 'sawtooth', 0.13, 0);
+        this.tone(430, 250, 0.12, 'sawtooth', 0.13, 0.15);
+        break;
+      case 'dog':
+        // Guau-guau bark
+        this.tone(320, 160, 0.12, 'sawtooth', 0.15, 0);
+        this.tone(340, 150, 0.14, 'sawtooth', 0.15, 0.17);
+        break;
+      case 'cat':
+        // Gentle meow glide
+        this.tone(540, 780, 0.18, 'triangle', 0.16, 0);
+        this.tone(780, 460, 0.28, 'sine', 0.16, 0.16);
+        break;
+      case 'rooster':
+        // Kikirikí crow!
+        this.tone(620, 740, 0.1, 'triangle', 0.15, 0);
+        this.tone(740, 880, 0.1, 'triangle', 0.15, 0.11);
+        this.tone(880, 1080, 0.26, 'sawtooth', 0.12, 0.22);
+        break;
+      case 'rabbit':
+        // Cute boing-boing hop
+        this.tone(340, 720, 0.12, 'sine', 0.16, 0);
+        this.tone(380, 780, 0.12, 'sine', 0.16, 0.15);
+        break;
+      case 'donkey':
+        // Hee-haw!
+        this.tone(480, 760, 0.18, 'sawtooth', 0.13, 0);
+        this.tone(360, 190, 0.28, 'sawtooth', 0.14, 0.2);
+        break;
+      default:
+        this.playCollect();
     }
   }
 
