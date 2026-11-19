@@ -138,9 +138,8 @@ export class FarmGame implements MiniGame {
   }
 
   private announceTarget(): void {
-    sound.playAnimalSound(this.target.id);
     sound.speak(
-      `¿Dónde está ${this.target.article} ${this.target.name}? ${this.target.soundText}`
+      `¿Dónde está ${this.target.article} ${this.target.name}? ¡${this.target.soundText.replace(/[¡!]/g, '')}!`
     );
   }
 
@@ -199,7 +198,6 @@ export class FarmGame implements MiniGame {
             this.feedbackText = `${a.def.soundText} ¡MUY BIEN, ES ${a.def.article.toUpperCase()} ${a.def.name.toUpperCase()}!`;
             this.feedbackColor = '#16A34A';
             this.feedbackTimer = 1.25;
-            sound.playAnimalSound(a.def.id);
             sound.playBonus();
             this.spawnSparks(cx, cy);
 
@@ -214,7 +212,7 @@ export class FarmGame implements MiniGame {
             this.feedbackText = `${a.def.soundText} Ese es ${a.def.article} ${a.def.name}`;
             this.feedbackColor = '#EA580C';
             this.feedbackTimer = 1.2;
-            sound.playAnimalSound(a.def.id);
+            sound.playTap();
             sound.speak(
               `${a.def.soundText} Ese es ${a.def.article} ${a.def.name}`
             );

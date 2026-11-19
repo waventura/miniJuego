@@ -126,7 +126,7 @@ export class AlphabetGame implements MiniGame {
     const isVowel = VOWELS.includes(this.targetLetter);
     const kindWord = isVowel ? 'la vocal' : 'la letra';
     sound.speak(
-      `Toca ${kindWord} ${this.targetLetter}, color ${this.targetColor.name.toLowerCase()}`
+      `¡Busca ${kindWord} ${this.targetLetter}! De color ${this.targetColor.name.toLowerCase()}.`
     );
   }
 

@@ -22,6 +22,7 @@ public class MainActivity extends BridgeActivity {
         getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         enableImmersiveMode();
 
+        // Prefer Google TTS engine if installed on the Android tablet for natural voices
         tts = new TextToSpeech(this, status -> {
             if (status == TextToSpeech.SUCCESS) {
                 int res = tts.setLanguage(new Locale("es", "MX"));
@@ -29,22 +30,22 @@ public class MainActivity extends BridgeActivity {
                     res = tts.setLanguage(new Locale("es", "US"));
                 }
                 if (res == TextToSpeech.LANG_MISSING_DATA || res == TextToSpeech.LANG_NOT_SUPPORTED) {
-                    tts.setLanguage(new Locale("es", "ES"));
+                    tts.setLanguage(new Locale("es", "419"));
                 }
-                selectBestSpanishVoice();
-                // Warm, lively, natural intonation for kids
-                tts.setSpeechRate(1.03f);
-                tts.setPitch(1.18f);
+                selectBestLatamSpanishVoice();
+                // Natural pitch (1.0) avoids robotic pitch-shift distortion!
+                tts.setSpeechRate(0.95f);
+                tts.setPitch(1.0f);
                 ttsReady = true;
             }
-        });
+        }, "com.google.android.tts");
 
         if (getBridge() != null && getBridge().getWebView() != null) {
             getBridge().getWebView().addJavascriptInterface(new TtsBridge(), "AndroidTTS");
         }
     }
 
-    private void selectBestSpanishVoice() {
+    private void selectBestLatamSpanishVoice() {
         try {
             Set<Voice> voices = tts.getVoices();
             if (voices == null || voices.isEmpty()) return;
@@ -55,18 +56,23 @@ public class MainActivity extends BridgeActivity {
             for (Voice v : voices) {
                 if (v == null || v.getLocale() == null) continue;
                 if (!"es".equalsIgnoreCase(v.getLocale().getLanguage())) continue;
+                // Keep offline-capable voices so it always works without Wi-Fi
                 if (v.isNetworkConnectionRequired()) continue;
 
-                int score = v.getQuality(); // 100..500 (higher = more natural/neural)
+                int score = v.getQuality(); // 100..500 (higher = more natural)
                 String country = v.getLocale().getCountry();
-                if ("MX".equalsIgnoreCase(country)) score += 60;
-                else if ("US".equalsIgnoreCase(country)) score += 45;
-                else if ("ES".equalsIgnoreCase(country)) score += 20;
+                if ("MX".equalsIgnoreCase(country)) score += 120;
+                else if ("US".equalsIgnoreCase(country)) score += 110; // Google Latin American Spanish
+                else if ("419".equalsIgnoreCase(country) || "CO".equalsIgnoreCase(country) || "AR".equalsIgnoreCase(country)) score += 100;
+                else if ("ES".equalsIgnoreCase(country)) score += 10;
 
-                // Prefer natural Google neural/local voices when present
                 String name = v.getName() != null ? v.getName().toLowerCase() : "";
-                if (name.contains("local") || name.contains("esm") || name.contains("esu")) {
-                    score += 15;
+                // Google Latin American neural/local voice identifiers
+                if (name.contains("es-us") || name.contains("es-mx") || name.contains("esu") || name.contains("esm")) {
+                    score += 50;
+                }
+                if (name.contains("local")) {
+                    score += 20;
                 }
 
                 if (score > bestScore) {
@@ -79,7 +85,7 @@ public class MainActivity extends BridgeActivity {
                 tts.setVoice(bestVoice);
             }
         } catch (Exception ignored) {
-            // Keep default Spanish voice if voice enumeration is unavailable
+            // Keep default Latin American Spanish locale if enumeration fails
         }
     }
 

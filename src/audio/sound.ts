@@ -94,7 +94,7 @@ class SoundEngine {
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang = 'es-MX';
       utter.rate = 0.95;
-      utter.pitch = 1.1;
+      utter.pitch = 1.0;
       window.speechSynthesis.speak(utter);
     } catch {
       // ignore on unsupported WebViews
