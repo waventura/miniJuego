@@ -52,6 +52,28 @@ class SoundEngine {
       }
       this.currentVoice = null;
     }
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        window.speechSynthesis.cancel();
+      } catch {
+        // ignore
+      }
+    }
+  }
+
+  public speak(text: string): void {
+    if (this.muted) return;
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    try {
+      window.speechSynthesis.cancel();
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = 'es-MX';
+      utter.rate = 0.95;
+      utter.pitch = 1.1;
+      window.speechSynthesis.speak(utter);
+    } catch {
+      // ignore on unsupported WebViews
+    }
   }
 
   public playVoice(id: VoiceId): void {

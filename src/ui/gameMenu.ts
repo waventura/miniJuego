@@ -125,42 +125,36 @@ export class GameMenuScreen {
         subtitle: '5 niveles • ¡SPLASH!',
         bg: '#06B6D4',
         border: '#0E7490',
+      },
+      {
+        id: 'alphabet',
+        title: '12. ABC',
+        subtitle: '5 niveles • Vocales!',
+        bg: '#D946EF',
+        border: '#86198F',
         isNew: true,
       },
     ];
 
-    const row1W = 204;
-    const row1H = 242;
-    const gap1 = 14;
-    const startX1 = (GAME_WIDTH - (row1W * 6 + gap1 * 5)) / 2;
-    const y1 = 132;
-
-    const row2W = 244;
-    const row2H = 242;
-    const gap2 = 16;
-    const startX2 = (GAME_WIDTH - (row2W * 5 + gap2 * 4)) / 2;
-    const y2 = y1 + row1H + 22;
+    // Symmetric 6x2 grid for all 12 mini-games!
+    const cols = 6;
+    const cardW = 204;
+    const cardH = 242;
+    const gapX = 14;
+    const gapY = 22;
+    const startX = (GAME_WIDTH - (cardW * cols + gapX * (cols - 1))) / 2;
+    const startY = 132;
 
     this.cards = defs.map((d, i) => {
-      if (i < 6) {
-        return {
-          ...d,
-          rect: {
-            x: startX1 + i * (row1W + gap1),
-            y: y1,
-            w: row1W,
-            h: row1H,
-          },
-        };
-      }
-      const col = i - 6;
+      const col = i % cols;
+      const row = Math.floor(i / cols);
       return {
         ...d,
         rect: {
-          x: startX2 + col * (row2W + gap2),
-          y: y2,
-          w: row2W,
-          h: row2H,
+          x: startX + col * (cardW + gapX),
+          y: startY + row * (cardH + gapY),
+          w: cardW,
+          h: cardH,
         },
       };
     });
@@ -489,7 +483,7 @@ export class GameMenuScreen {
       ctx.moveTo(46, 26);
       ctx.lineTo(26, 46);
       ctx.stroke();
-    } else {
+    } else if (id === 'waterballoons') {
       // Cute yellow duck + colorful water balloon!
       ctx.fillStyle = '#38BDF8';
       fillRoundRect(ctx, -64, 24, 128, 32, 10);
@@ -524,6 +518,29 @@ export class GameMenuScreen {
       ctx.ellipse(-34, -22 + bob, 18, 22, 0.25, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
+    } else {
+      // Colorful falling A, B, C letter bubbles!
+      const bubbles = [
+        { x: -32, y: -12, letter: 'A', bg: '#EF4444', border: '#991B1B' },
+        { x: 30, y: -22, letter: 'E', bg: '#3B82F6', border: '#1E3A8A' },
+        { x: 4, y: 28, letter: 'O', bg: '#22C55E', border: '#15803D' },
+      ];
+      for (const b of bubbles) {
+        const bob = Math.sin(this.time * 4 + b.x) * 4;
+        ctx.fillStyle = b.bg;
+        ctx.strokeStyle = b.border;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y + bob, 26, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = '900 28px "Fredoka", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(b.letter, b.x, b.y + bob + 2);
+      }
     }
 
     ctx.restore();

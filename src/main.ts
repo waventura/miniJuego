@@ -31,6 +31,7 @@ import { MemoryGame } from './games/memoryGame';
 import { FlappyGame } from './games/flappyGame';
 import { TicTacToeGame } from './games/ticTacToeGame';
 import { WaterBalloonGame } from './games/waterBalloonGame';
+import { AlphabetGame } from './games/alphabetGame';
 import { drawTactileButton } from './ui/buttons';
 import { CURRENT_VERSION, updater } from './updater';
 
@@ -192,6 +193,9 @@ function launchGame(gameId: GameId, level = 1): void {
       break;
     case 'waterballoons':
       activeGame = new WaterBalloonGame(selectedCharacter, level);
+      break;
+    case 'alphabet':
+      activeGame = new AlphabetGame(selectedCharacter, level);
       break;
   }
   screen = 'playing';
