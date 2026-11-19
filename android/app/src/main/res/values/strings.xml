@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Carlos y Mateo</string>
+    <string name="title_activity_main">Carlos y Mateo</string>
+    <string name="package_name">com.waventura.minijuego</string>
+    <string name="custom_url_scheme">com.waventura.minijuego</string>
+</resources>

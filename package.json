@@ -1,0 +1,22 @@
+{
+  "name": "minijuego-carlos-y-mateo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mini-juegos 2D táctiles para Carlos y Mateo en tablet Android",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "cap:sync": "npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.2.0",
+    "@capacitor/core": "^7.2.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.2.0",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
+  }
+}

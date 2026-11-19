@@ -1,0 +1,46 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  background-color: #133c68;
+  font-family: 'Fredoka', 'Nunito', 'Rounded Mplus 1c', 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
+  position: fixed;
+  inset: 0;
+}
+
+#app {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+}
+
+#game-canvas {
+  display: block;
+  max-width: 100vw;
+  max-height: 100vh;
+  width: auto;
+  height: auto;
+  aspect-ratio: 1340 / 800;
+  touch-action: none;
+  overscroll-behavior: none;
+  border-radius: 0;
+  background-color: #5ec8ff;
+}
