@@ -37,7 +37,7 @@ interface Racer {
 interface Obstacle {
   lane: number; // 0..3
   dist: number;
-  kind: 'cone' | 'puddle';
+  kind: 'cone' | 'puddle' | 'hurdle';
   hit: boolean;
 }
 
@@ -71,7 +71,7 @@ export class RaceGame implements MiniGame {
   private accelBtn: Rect = { x: GAME_WIDTH - 362, y: 632, w: 320, h: 132 };
 
   constructor(private playerId: CharacterId, private level = 1) {
-    this.finishDist = FINISH_DIST + (level - 1) * 900;
+    this.finishDist = FINISH_DIST + (level - 1) * 750;
     const others = CHARACTERS.filter((c) => c.id !== playerId);
     const cpuPicks = others.slice(0, 3);
     const playerMeta =
@@ -88,7 +88,7 @@ export class RaceGame implements MiniGame {
         yOffset: 0,
         vy: 0,
         stumbleTimer: 0,
-        cpuBaseSpeed: 285 + (level - 1) * 32 + i * 18,
+        cpuBaseSpeed: 285 + (level - 1) * 24 + i * 18,
         cpuPhase: i * 1.9,
       });
     });
@@ -107,18 +107,21 @@ export class RaceGame implements MiniGame {
       cpuPhase: 0,
     });
 
-    // Place cones & puddles on ALL 4 lanes!
-    const spacing = Math.max(460, 580 - (level - 1) * 50);
+    // Place cones, puddles, and red/white hurdles on ALL 4 lanes!
+    const spacing = Math.max(340, 520 - (level - 1) * 45);
     for (let lane = 0; lane < 4; lane++) {
-      let d = 680 + lane * 110;
-      while (d < this.finishDist - 450) {
+      let d = 620 + lane * 95;
+      while (d < this.finishDist - 420) {
+        const roll = Math.random();
+        const kind: 'cone' | 'puddle' | 'hurdle' =
+          roll < 0.36 ? 'cone' : roll < 0.68 ? 'puddle' : 'hurdle';
         this.obstacles.push({
           lane,
           dist: d,
-          kind: Math.random() < 0.55 ? 'cone' : 'puddle',
+          kind,
           hit: false,
         });
-        d += spacing + Math.random() * 220;
+        d += spacing + Math.random() * 170;
       }
     }
   }
@@ -154,7 +157,7 @@ export class RaceGame implements MiniGame {
           gameTitle: `Pista de Carreras (Nivel ${this.level})`,
           characterId: this.playerId,
           level: this.level,
-          maxLevel: 3,
+          maxLevel: 5,
           headline: this.playerRank === 1 ? '¡CAMPEÓN DE LA PISTA!' : '¡LO LOGRASTE!',
           statLabel: placeText,
           medalTitle: 'MEDALLA DE VELOCIDAD',
@@ -385,8 +388,31 @@ export class RaceGame implements MiniGame {
         if (sx < -80 || sx > GAME_WIDTH + 80) continue;
         if (obs.kind === 'cone') {
           drawCone(ctx, sx, LANE_Y[lane], laneScale);
-        } else {
+        } else if (obs.kind === 'puddle') {
           drawPuddle(ctx, sx, LANE_Y[lane], laneScale * 1.04);
+        } else {
+          // Red & white striped hurdle barrier!
+          ctx.save();
+          ctx.translate(sx, LANE_Y[lane]);
+          ctx.scale(laneScale, laneScale);
+          ctx.strokeStyle = '#334155';
+          ctx.lineWidth = 5;
+          ctx.beginPath();
+          ctx.moveTo(-22, 0);
+          ctx.lineTo(-22, -46);
+          ctx.moveTo(22, 0);
+          ctx.lineTo(22, -46);
+          ctx.stroke();
+          ctx.fillStyle = '#EF4444';
+          ctx.strokeStyle = '#991B1B';
+          ctx.lineWidth = 2.5;
+          fillRoundRect(ctx, -28, -50, 56, 16, 4);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(-14, -48, 12, 12);
+          ctx.fillRect(6, -48, 12, 12);
+          ctx.restore();
         }
       }
 

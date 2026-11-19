@@ -39,14 +39,14 @@ const ALL_GAMES: GameCardDef[] = [
   {
     id: 'race',
     title: '1. CARRERAS',
-    subtitle: '3 niveles • ¡Corre!',
+    subtitle: '5 niveles • ¡Vallas!',
     bg: '#EF4444',
     border: '#B91C1C',
   },
   {
     id: 'playground',
     title: '2. RECREO',
-    subtitle: '3 niveles • ¡Salta!',
+    subtitle: '5 niveles • ¡Salta!',
     bg: '#22C55E',
     border: '#15803D',
   },
@@ -60,7 +60,7 @@ const ALL_GAMES: GameCardDef[] = [
   {
     id: 'mountain',
     title: '4. MONTAÑA',
-    subtitle: '3 niveles • ¡Sube!',
+    subtitle: '5 niveles • ¡Móvil!',
     bg: '#8B5CF6',
     border: '#5B21B6',
   },
@@ -81,7 +81,7 @@ const ALL_GAMES: GameCardDef[] = [
   {
     id: 'cars',
     title: '7. CARRITOS',
-    subtitle: '3 niveles • ¡TURBO!',
+    subtitle: '5 niveles • ¡TURBO!',
     bg: '#F97316',
     border: '#C2410C',
   },
@@ -95,7 +95,7 @@ const ALL_GAMES: GameCardDef[] = [
   {
     id: 'flappy',
     title: '9. VOLAR',
-    subtitle: '3 niveles • ¡Flappy!',
+    subtitle: '5 niveles • ¡Flappy!',
     bg: '#14B8A6',
     border: '#0F766E',
   },

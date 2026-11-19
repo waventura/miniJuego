@@ -12,6 +12,7 @@ import {
   drawBackpack,
   drawBall,
   drawCloud,
+  drawCone,
   drawGradCapItem,
   drawSlide,
   drawStar,
@@ -23,7 +24,7 @@ import { sound } from '../audio/sound';
 
 interface PGObstacle {
   x: number;
-  kind: 'slide' | 'ball' | 'backpack';
+  kind: 'slide' | 'ball' | 'backpack' | 'cone';
   hit: boolean;
 }
 
@@ -73,20 +74,20 @@ export class PlaygroundGame implements MiniGame {
   };
 
   constructor(private playerId: CharacterId, private level = 1) {
-    this.totalDist = TOTAL_DIST + (level - 1) * 1400;
-    // Generate kid-friendly course of obstacles + jump-arc collectibles
-    const kinds: Array<'slide' | 'ball' | 'backpack'> = [
+    this.totalDist = TOTAL_DIST + (level - 1) * 1100;
+    const kinds: Array<'slide' | 'ball' | 'backpack' | 'cone'> = [
       'ball',
       'backpack',
       'slide',
+      'cone',
     ];
-    let x = 760;
+    let x = 700;
     let idx = 0;
-    while (x < this.totalDist - 500) {
+    const baseGap = Math.max(340, 500 - (level - 1) * 38);
+    while (x < this.totalDist - 480) {
       const kind = kinds[idx % kinds.length];
       this.obstacles.push({ x, kind, hit: false });
 
-      // Arc of collectibles right over the obstacle to teach jumping!
       this.collectibles.push({
         x: x - 65,
         y: GROUND_Y - 120,
@@ -106,15 +107,7 @@ export class PlaygroundGame implements MiniGame {
         collected: false,
       });
 
-      // Bonus low collectibles between obstacles
-      this.collectibles.push({
-        x: x + 260,
-        y: GROUND_Y - 58,
-        kind: idx % 3 === 0 ? 'cap' : 'star',
-        collected: false,
-      });
-
-      x += 540 + (idx % 3) * 55;
+      x += baseGap + (idx % 3) * 45;
       idx++;
     }
   }
@@ -130,7 +123,7 @@ export class PlaygroundGame implements MiniGame {
           gameTitle: `Patio de Recreo (Nivel ${this.level})`,
           characterId: this.playerId,
           level: this.level,
-          maxLevel: 3,
+          maxLevel: 5,
           headline: '¡SÚPER SALTARÍN!',
           statLabel: `★ ${this.stars} estrellas y ${this.caps} birretes`,
           medalTitle: 'MEDALLA DEL RECREO',
@@ -140,7 +133,6 @@ export class PlaygroundGame implements MiniGame {
       return null;
     }
 
-    // Jump on giant button OR tap anywhere on playfield (excluding top HUD)
     this.jumpHeld = isRectHeld(input, this.jumpBtn);
     const tappedPlayfield = input.pointers.some(
       (p) => p.justPressed && p.y > 105
@@ -157,8 +149,9 @@ export class PlaygroundGame implements MiniGame {
       sound.playJump();
     }
 
-    // Advance runner
-    const targetSpeed = this.stumbleTimer > 0 ? 175 : 275;
+    // Advance runner (faster on higher levels!)
+    const runSpeed = 280 + (this.level - 1) * 28;
+    const targetSpeed = this.stumbleTimer > 0 ? 155 : runSpeed;
     this.speed += (targetSpeed - this.speed) * Math.min(1, dt * 6);
     this.dist += this.speed * dt;
 
@@ -299,6 +292,8 @@ export class PlaygroundGame implements MiniGame {
         drawSlide(ctx, sx, GROUND_Y, 1.05);
       } else if (obs.kind === 'ball') {
         drawBall(ctx, sx, GROUND_Y, 26, -this.time * 4);
+      } else if (obs.kind === 'cone') {
+        drawCone(ctx, sx, GROUND_Y, 1.05);
       } else {
         drawBackpack(ctx, sx, GROUND_Y, 1.05);
       }

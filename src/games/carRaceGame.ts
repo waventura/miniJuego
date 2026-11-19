@@ -12,6 +12,7 @@ import { drawCharacter } from '../art/characters';
 import {
   drawCloud,
   drawCone,
+  drawPuddle,
   drawStar,
   drawSun,
   fillRoundRect,
@@ -24,7 +25,7 @@ const LANE_Y = [375, 470, 565];
 interface RoadItem {
   dist: number;
   lane: number;
-  kind: 'star' | 'boost' | 'cone';
+  kind: 'star' | 'boost' | 'cone' | 'puddle';
   collected: boolean;
 }
 
@@ -73,9 +74,9 @@ export class CarRaceGame implements MiniGame {
   private turboBtn: Rect = { x: GAME_WIDTH - 356, y: 632, w: 320, h: 132 };
 
   constructor(private playerId: CharacterId, private level = 1) {
-    this.finishDist = 4200 + (level - 1) * 1000;
+    this.finishDist = 4200 + (level - 1) * 900;
 
-    // 2 friendly CPU cars in other lanes
+    // 2 competitive CPU cars in other lanes
     const others = CHARACTERS.filter((c) => c.id !== playerId);
     const carColors = ['#3B82F6', '#22C55E', '#A855F7'];
     for (let i = 0; i < 2; i++) {
@@ -83,28 +84,39 @@ export class CarRaceGame implements MiniGame {
         id: others[i]?.id ?? 'pilot',
         lane: i === 0 ? 0 : 2,
         dist: 120 + i * 160,
-        speed: 325 + (level - 1) * 38 + i * 20,
+        speed: 325 + (level - 1) * 32 + i * 20,
         color: carColors[i % carColors.length],
       });
     }
 
-    // Populate road with stars, turbo pads, and very friendly spaced cones
-    for (let d = 520; d < this.finishDist - 400; d += 360) {
-      const starLane = Math.floor(Math.random() * 3);
-      this.items.push({ dist: d, lane: starLane, kind: 'star', collected: false });
+    // Populate road with stars, turbo pads, cones, puddles, and double-lane roadblocks!
+    const step = Math.max(250, 340 - (level - 1) * 20);
+    for (let d = 520; d < this.finishDist - 380; d += step) {
+      const safeLane = Math.floor(Math.random() * 3);
+      this.items.push({ dist: d, lane: safeLane, kind: 'star', collected: false });
+      if (Math.random() < 0.32) {
+        this.items.push({
+          dist: d + 95,
+          lane: safeLane,
+          kind: 'boost',
+          collected: false,
+        });
+      }
+
+      // Always place 1 obstacle in another lane, and on Level 2+ place 2 obstacles leaving 1 open lane!
+      const obsLane1 = (safeLane + 1) % 3;
       this.items.push({
-        dist: d + 120,
-        lane: starLane,
-        kind: Math.random() < 0.28 ? 'boost' : 'star',
+        dist: d + 40,
+        lane: obsLane1,
+        kind: Math.random() < 0.55 ? 'cone' : 'puddle',
         collected: false,
       });
-
-      if (d % 720 === 520) {
-        const coneLane = (starLane + 1) % 3;
+      if (level >= 2 && Math.random() < 0.45 + level * 0.1) {
+        const obsLane2 = (safeLane + 2) % 3;
         this.items.push({
-          dist: d + 60,
-          lane: coneLane,
-          kind: 'cone',
+          dist: d + 40,
+          lane: obsLane2,
+          kind: Math.random() < 0.5 ? 'cone' : 'puddle',
           collected: false,
         });
       }
@@ -135,7 +147,7 @@ export class CarRaceGame implements MiniGame {
           gameTitle: `¡Súper Carritos! (Nivel ${this.level})`,
           characterId: this.playerId,
           level: this.level,
-          maxLevel: 3,
+          maxLevel: 5,
           headline:
             rank === 1 ? '¡CAMPEÓN DE CARRERAS!' : '¡SÚPER PILOTO!',
           statLabel: `★ ${this.stars} estrellas — Nivel ${this.level} completado`,
@@ -360,8 +372,10 @@ export class CarRaceGame implements MiniGame {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText('⚡⚡', sx, sy - 1);
-      } else {
+      } else if (item.kind === 'cone') {
         drawCone(ctx, sx, sy + 18, 0.9);
+      } else {
+        drawPuddle(ctx, sx, sy + 16, 1.05);
       }
     }
 

@@ -20,8 +20,11 @@ import { sound } from '../audio/sound';
 
 interface Platform {
   x: number;
+  baseX: number;
   y: number;
   w: number;
+  moveAmp?: number;
+  moveSpeed?: number;
   isSummit?: boolean;
 }
 
@@ -55,19 +58,26 @@ export class MountainGame implements MiniGame {
 
   constructor(private playerId: CharacterId, private level = 1) {
     // Base meadow floor
-    this.platforms.push({ x: 80, y: 600, w: GAME_WIDTH - 160 });
+    this.platforms.push({ x: 80, baseX: 80, y: 600, w: GAME_WIDTH - 160 });
 
-    // Build easy-to-reach zigzag platforms climbing upward (9, 12, or 15 levels)
-    const levels = 9 + (level - 1) * 3;
+    // Build platforms climbing upward (9..17 levels), with moving platforms from Level 2+!
+    const levels = 9 + (level - 1) * 2;
     let y = 475;
     for (let i = 0; i < levels; i++) {
-      const w = 320;
+      const w = Math.max(230, 320 - (level - 1) * 18);
       const positions = [210, 510, 810];
       const slot = i % 3 === 0 ? 1 : i % 3 === 1 ? 0 : 2;
       const x = positions[slot];
-      this.platforms.push({ x, y, w });
+      const isMoving = level >= 2 && i % 2 === 1;
+      this.platforms.push({
+        x,
+        baseX: x,
+        y,
+        w,
+        moveAmp: isMoving ? 90 + level * 14 : 0,
+        moveSpeed: isMoving ? 1.1 + level * 0.22 : 0,
+      });
 
-      // Star above every platform
       this.stars.push({
         x: x + w / 2,
         y: y - 54,
@@ -81,6 +91,7 @@ export class MountainGame implements MiniGame {
     this.summitY = y - 10;
     this.platforms.push({
       x: GAME_WIDTH / 2 - 260,
+      baseX: GAME_WIDTH / 2 - 260,
       y: this.summitY,
       w: 520,
       isSummit: true,
@@ -90,6 +101,20 @@ export class MountainGame implements MiniGame {
   public update(dt: number, input: InputSnapshot): VictoryData | null {
     this.time += dt;
 
+    // Animate moving platforms
+    for (let i = 0; i < this.platforms.length; i++) {
+      const plat = this.platforms[i];
+      if (plat.moveAmp && plat.moveSpeed) {
+        plat.x = Math.max(
+          90,
+          Math.min(
+            GAME_WIDTH - 90 - plat.w,
+            plat.baseX + Math.sin(this.time * plat.moveSpeed + i) * plat.moveAmp
+          )
+        );
+      }
+    }
+
     if (this.flagPlanted) {
       this.finishTimer += dt;
       if (this.finishTimer >= 1.45) {
@@ -98,7 +123,7 @@ export class MountainGame implements MiniGame {
           gameTitle: `Escalada a la Montaña (Nivel ${this.level})`,
           characterId: this.playerId,
           level: this.level,
-          maxLevel: 3,
+          maxLevel: 5,
           headline: '¡LLEGASTE A LA CIMA!',
           statLabel: `¡Bandera plantada y ${this.starsCollected} ★!`,
           medalTitle: 'MEDALLA DE GRADUADO',

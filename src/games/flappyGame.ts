@@ -14,8 +14,10 @@ import { sound } from '../audio/sound';
 
 interface PipePair {
   x: number;
+  baseGapY: number;
   gapY: number; // center Y of safe gap
   gapH: number;
+  moveAmp: number;
   passed: boolean;
   starCollected: boolean;
 }
@@ -62,7 +64,7 @@ export class FlappyGame implements MiniGame {
   };
 
   constructor(private playerId: CharacterId, private level = 1) {
-    this.targetPipes = 6 + (level - 1) * 3; // 6, 9, 12 pipes
+    this.targetPipes = 6 + (level - 1) * 2; // 6..14 pipes
     this.resetRound();
   }
 
@@ -76,14 +78,17 @@ export class FlappyGame implements MiniGame {
     this.sparks = [];
     this.pipes = [];
 
-    const gapH = this.level === 1 ? 255 : this.level === 2 ? 235 : 220;
-    const spacing = 460;
+    const gapH = Math.max(195, 255 - (this.level - 1) * 14);
+    const spacing = Math.max(390, 460 - (this.level - 1) * 15);
     for (let i = 0; i < this.targetPipes; i++) {
       const gapY = 245 + ((i * 97 + 40) % 210);
+      const moves = this.level >= 2 && i % 2 === 1;
       this.pipes.push({
         x: 780 + i * spacing,
+        baseGapY: gapY,
         gapY,
         gapH,
+        moveAmp: moves ? 42 + this.level * 10 : 0,
         passed: false,
         starCollected: false,
       });
@@ -127,7 +132,7 @@ export class FlappyGame implements MiniGame {
           gameTitle: `¡Vuelo Feliz! (Nivel ${this.level})`,
           characterId: this.playerId,
           level: this.level,
-          maxLevel: 3,
+          maxLevel: 5,
           headline: '¡SÚPER VOLADOR!',
           statLabel: `★ ${this.stars} estrellas y ${this.passedCount} arcos`,
           medalTitle: 'MEDALLA DE VUELO',
@@ -174,34 +179,37 @@ export class FlappyGame implements MiniGame {
       }
     }
 
-    // Float gently until first tap so kids are ready!
     if (!this.started) {
       this.py = 350 + Math.sin(this.time * 4) * 14;
       return null;
     }
 
-    // Gravity
     this.vy += 860 * dt;
     this.vy = Math.max(-420, Math.min(420, this.vy));
     this.py += this.vy * dt;
 
-    // Soft ceiling
     if (this.py < 105) {
       this.py = 105;
       this.vy = 40;
     }
 
-    // Hitting the ground loses the round!
     if (this.py >= 622) {
       this.py = 622;
       this.triggerCrash();
       return null;
     }
 
-    // Move pipes & check collisions
-    const speed = 200 + (this.level - 1) * 22;
-    for (const pipe of this.pipes) {
+    // Move pipes horizontally + vertically on Level 2+!
+    const speed = 205 + (this.level - 1) * 20;
+    for (let i = 0; i < this.pipes.length; i++) {
+      const pipe = this.pipes[i];
       pipe.x -= speed * dt;
+      if (pipe.moveAmp > 0) {
+        pipe.gapY = Math.max(
+          185,
+          Math.min(460, pipe.baseGapY + Math.sin(this.time * 2.1 + i) * pipe.moveAmp)
+        );
+      }
 
       // Collect center star
       if (!pipe.starCollected) {
