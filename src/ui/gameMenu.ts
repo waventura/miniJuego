@@ -109,7 +109,7 @@ const ALL_GAMES: GameCardDef[] = [
   {
     id: 'waterballoons',
     title: '11. GLOBOS',
-    subtitle: '5 niveles • ¡SPLASH!',
+    subtitle: '10 niveles • ¡SPLASH!',
     bg: '#06B6D4',
     border: '#0E7490',
   },
